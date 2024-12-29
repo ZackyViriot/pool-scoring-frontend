@@ -4,8 +4,8 @@ import { Elements } from '@stripe/react-stripe-js';
 
 // Define API URL based on environment
 const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://pool-scoring-frontend.vercel.app'  // Production URL
-  : 'http://localhost:3001';                    // Development URL
+  ? 'https://pool-scoring-backend.vercel.app'  // Production backend URL
+  : 'http://localhost:3001';                   // Development URL
 
 console.log('Stripe Key:', process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);

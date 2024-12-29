@@ -5,8 +5,8 @@ const AuthContext = createContext(null);
 
 // Define API URL based on environment
 const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://pool-scoring-frontend.vercel.app'  // Production URL
-  : 'http://localhost:3001';                    // Development URL
+  ? 'https://pool-scoring-backend.vercel.app'  // Production backend URL
+  : 'http://localhost:3001';                   // Development URL
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

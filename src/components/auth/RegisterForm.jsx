@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useStripe as useStripeContext } from '../../context/StripeContext';
 import { useNavigate } from 'react-router-dom';
-import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 export default function RegisterForm({ onClose }) {
   const [step, setStep] = useState('payment');
@@ -21,7 +21,7 @@ export default function RegisterForm({ onClose }) {
   const elements = useElements();
   const navigate = useNavigate();
 
-  const cardElementOptions = {
+  const cardStyle = {
     style: {
       base: {
         color: '#fff',
@@ -31,7 +31,6 @@ export default function RegisterForm({ onClose }) {
         '::placeholder': {
           color: '#6b7280',
         },
-        backgroundColor: 'transparent',
       },
       invalid: {
         color: '#fa755a',
@@ -58,22 +57,11 @@ export default function RegisterForm({ onClose }) {
       }
 
       const clientSecret = await createPaymentIntent(isMonthly);
-      
-      // Get the ZIP code value
-      const zipCode = e.target.querySelector('input[name="zip"]').value;
-      
-      if (!zipCode || zipCode.length !== 5) {
-        throw new Error('Please enter a valid ZIP code');
-      }
+      const cardElement = elements.getElement(CardElement);
 
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
-        card: elements.getElement(CardNumberElement),
-        billing_details: {
-          address: {
-            postal_code: zipCode
-          }
-        }
+        card: cardElement,
       });
 
       if (error) {
@@ -116,12 +104,12 @@ export default function RegisterForm({ onClose }) {
   };
 
   return (
-    <div className="max-w-md mx-auto p-8 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 shadow-2xl">
+    <div className="max-w-md mx-auto p-6 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700">
       <button
         onClick={onClose}
-        className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gray-800 
+        className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gray-800 
           flex items-center justify-center text-gray-400 hover:text-white
-          transition-colors border border-gray-700 hover:border-gray-600"
+          transition-colors border border-gray-700"
       >
         ×
       </button>
@@ -131,31 +119,31 @@ export default function RegisterForm({ onClose }) {
       </h2>
 
       {error && (
-        <div className="mb-6 p-3 bg-red-500/20 text-red-400 rounded-lg text-center border border-red-500/20">
+        <div className="mb-4 p-2 bg-red-500/20 text-red-400 rounded text-center">
           {error}
         </div>
       )}
 
       {step === 'payment' ? (
-        <form onSubmit={handlePayment} className="space-y-6">
+        <form onSubmit={handlePayment} className="space-y-4">
           <div className="flex justify-center space-x-4 mb-6">
             <button
               type="button"
               onClick={() => setIsMonthly(false)}
-              className={`px-6 py-3 rounded-lg transition-all ${
+              className={`px-4 py-2 rounded-lg transition-colors ${
                 !isMonthly 
-                  ? 'bg-blue-500 text-white scale-105 shadow-lg' 
+                  ? 'bg-blue-500 text-white' 
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
-              One-time $10
+              One-time $1
             </button>
             <button
               type="button"
               onClick={() => setIsMonthly(true)}
-              className={`px-6 py-3 rounded-lg transition-all ${
+              className={`px-4 py-2 rounded-lg transition-colors ${
                 isMonthly 
-                  ? 'bg-purple-500 text-white scale-105 shadow-lg' 
+                  ? 'bg-blue-500 text-white' 
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
@@ -163,106 +151,63 @@ export default function RegisterForm({ onClose }) {
             </button>
           </div>
 
-          <div className="p-4 bg-blue-500/10 rounded-lg text-center mb-6 border border-blue-500/20">
-            <p className="text-blue-300 font-medium">
-              {isMonthly ? 'Monthly subscription: $5/month' : 'One-time payment: $10'}
-            </p>
-            <p className="text-sm text-blue-300/80 mt-1">
-              {isMonthly ? 'Cancel anytime' : 'Lifetime access'}
+          <div className="p-3 bg-blue-500/20 rounded-lg text-center mb-4">
+            <p className="text-blue-300">
+              {isMonthly ? 'Monthly subscription: $5/month' : 'One-time payment: $1'}
             </p>
           </div>
 
-          <div className="space-y-4">
-            <div className="p-4 bg-black/30 rounded-lg border border-gray-700">
-              <label className="block text-sm font-medium mb-2 text-gray-200">Card Number</label>
-              <CardNumberElement options={cardElementOptions} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-black/30 rounded-lg border border-gray-700">
-                <label className="block text-sm font-medium mb-2 text-gray-200">Expiration Date</label>
-                <CardExpiryElement options={cardElementOptions} />
-              </div>
-
-              <div className="p-4 bg-black/30 rounded-lg border border-gray-700">
-                <label className="block text-sm font-medium mb-2 text-gray-200">CVC</label>
-                <CardCvcElement options={cardElementOptions} />
-              </div>
-            </div>
-
-            <div className="p-4 bg-black/30 rounded-lg border border-gray-700">
-              <label className="block text-sm font-medium mb-2 text-gray-200">ZIP Code</label>
-              <input
-                type="text"
-                name="zip"
-                placeholder="12345"
-                className="w-full bg-transparent border-none text-white placeholder-gray-500 focus:outline-none focus:ring-0"
-                maxLength="5"
-                pattern="[0-9]*"
-              />
-            </div>
+          <div className="p-4 bg-black/30 rounded-lg border border-gray-700">
+            <CardElement options={cardStyle} />
           </div>
 
           <button
             type="submit"
             disabled={isProcessing}
-            className={`w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-purple-600 
-              text-white rounded-lg font-semibold transition-all
-              hover:from-blue-600 hover:to-purple-700 
-              ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}
+            className={`w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 
+              transition-colors ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {isProcessing ? (
-              <div className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing...
-              </div>
-            ) : 'Pay & Continue'}
+            {isProcessing ? 'Processing...' : 'Pay & Continue'}
           </button>
         </form>
       ) : (
         <form onSubmit={handleRegistration} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1.5 text-gray-200">Name</label>
+            <label className="block text-sm font-medium mb-1">Name</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-black/30 border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-colors text-white"
+              className="w-full p-2 rounded bg-black/30 border border-gray-700 focus:border-blue-500 focus:outline-none"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1.5 text-gray-200">Email</label>
+            <label className="block text-sm font-medium mb-1">Email</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-black/30 border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-colors text-white"
+              className="w-full p-2 rounded bg-black/30 border border-gray-700 focus:border-blue-500 focus:outline-none"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1.5 text-gray-200">Password</label>
+            <label className="block text-sm font-medium mb-1">Password</label>
             <input
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-black/30 border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-colors text-white"
+              className="w-full p-2 rounded bg-black/30 border border-gray-700 focus:border-blue-500 focus:outline-none"
               required
             />
           </div>
           <button
             type="submit"
-            className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-purple-600 
-              text-white rounded-lg font-semibold transition-all
-              hover:from-blue-600 hover:to-purple-700 hover:scale-[1.02]
-              mt-6"
+            className="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           >
             Create Account
           </button>
