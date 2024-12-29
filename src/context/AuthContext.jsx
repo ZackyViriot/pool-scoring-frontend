@@ -2,9 +2,11 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext(null);
-const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost.ssr.tax:3001'
-  : 'http://localhost:3001';
+
+// Define API URL based on environment
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? 'https://pool-scoring-frontend.vercel.app'  // Production URL
+  : 'http://localhost:3001';                    // Development URL
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
