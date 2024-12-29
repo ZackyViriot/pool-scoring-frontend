@@ -29,7 +29,10 @@ export const AuthProvider = ({ children }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        credentials: 'include',
+        mode: 'cors',
         body: JSON.stringify({ email, password }),
       });
 
@@ -54,7 +57,10 @@ export const AuthProvider = ({ children }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        credentials: 'include',
+        mode: 'cors',
         body: JSON.stringify({ email, password, name, paymentIntentId }),
       });
 
