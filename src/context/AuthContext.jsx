@@ -6,7 +6,7 @@ const AuthContext = createContext(null);
 // Define API URL based on environment
 const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://pool-scoring-backend-production.up.railway.app'  // Production backend URL
-  : 'http://localhost:3001';                   // Development URL
+  : 'http://localhost:8000';                   // Development URL
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -25,12 +25,14 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('Making login request to:', `${API_BASE_URL}/auth/login`);
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 

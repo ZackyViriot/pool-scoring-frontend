@@ -5,7 +5,7 @@ import { Elements } from '@stripe/react-stripe-js';
 // Define API URL based on environment
 const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://pool-scoring-backend-production.up.railway.app'
-  : 'http://localhost:3001';
+  : 'http://localhost:8000';
 
 // Use the publishable key directly for now
 const STRIPE_PUBLISHABLE_KEY = 'pk_live_51QRPF6GDlcFzOwRVEJvLkMMRszuqwYRWbkkWohm4sMriIscHDCSIy3bbjzjs8Ru0Lcn5zr73r7jRET97blOySnfj000SweidEo';
@@ -44,14 +44,13 @@ export const StripeProvider = ({ children }) => {
         throw new Error('Stripe is not initialized yet. Please try again.');
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/create-payment-intent`, {
+      const response = await fetch(`${API_BASE_URL}/payment/create-payment-intent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Origin': 'https://pool-scoring-frontend.vercel.app'
+          'Accept': 'application/json'
         },
-        mode: 'cors',
+        credentials: 'include',
         body: JSON.stringify({ isMonthly }),
       });
 
