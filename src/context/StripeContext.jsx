@@ -4,13 +4,16 @@ import { Elements } from '@stripe/react-stripe-js';
 
 // Define API URL based on environment
 const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://pool-scoring-backend-production.up.railway.app'  // Production backend URL
-  : 'http://localhost:3001';                   // Development URL
+  ? 'https://pool-scoring-backend-production.up.railway.app'
+  : 'http://localhost:3001';
+
+// Use the publishable key directly for now
+const STRIPE_PUBLISHABLE_KEY = 'pk_live_51QRPF6GDlcFzOwRVEJvLkMMRszuqwYRWbkkWohm4sMriIscHDCSIy3bbjzjs8Ru0Lcn5zr73r7jRET97blOySnfj000SweidEo';
 
 console.log('Environment:', process.env.NODE_ENV);
-console.log('Stripe Key:', process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+console.log('Using direct Stripe key');
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
 // Log the stripe promise
 stripePromise.then(stripe => {
@@ -27,13 +30,17 @@ export const StripeProvider = ({ children }) => {
 
   useEffect(() => {
     stripePromise.then(stripe => {
+      console.log('Stripe initialized in provider:', !!stripe);
       setStripeLoaded(!!stripe);
+    }).catch(err => {
+      console.error('Stripe initialization error in provider:', err);
     });
   }, []);
 
   const createPaymentIntent = async (isMonthly = false) => {
     try {
       if (!stripeLoaded) {
+        console.error('Stripe not loaded when creating payment intent');
         throw new Error('Stripe is not initialized yet. Please try again.');
       }
 
@@ -64,7 +71,8 @@ export const StripeProvider = ({ children }) => {
     try {
       const stripe = await stripePromise;
       if (!stripe || !paymentIntent) {
-        throw new Error('Stripe not initialized');
+        console.error('Stripe or payment intent missing:', { stripe: !!stripe, paymentIntent: !!paymentIntent });
+        throw new Error('Stripe not initialized or payment intent missing');
       }
 
       const { error, paymentIntent: confirmedIntent } = await stripe.confirmCardPayment(
