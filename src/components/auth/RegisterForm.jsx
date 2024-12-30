@@ -133,34 +133,9 @@ export default function RegisterForm({ onClose }) {
 
       {step === 'payment' ? (
         <form onSubmit={handlePayment} className="space-y-4">
-          <div className="flex justify-center space-x-4 mb-6">
-            <button
-              type="button"
-              onClick={() => setIsMonthly(false)}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                !isMonthly 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              One-time $1
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsMonthly(true)}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                isMonthly 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              Monthly $5
-            </button>
-          </div>
-
           <div className="p-3 bg-blue-500/20 rounded-lg text-center mb-4">
             <p className="text-blue-300">
-              {isMonthly ? 'Monthly subscription: $5/month' : 'One-time payment: $1'}
+              One-time payment: $10
             </p>
           </div>
 

@@ -76,13 +76,13 @@ export default function LandingPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16">
                 <div className="text-center">
                     <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-                        Professional Pool Scoring System
+                        Straight Pool Scoring System
                     </h1>
                     <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto">
                         The ultimate digital scoring solution for straight pool players and tournaments.
                     </p>
                     {!user ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
                             {/* One-time Payment Card */}
                             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500/50 transition-colors">
                                 <h3 className="text-xl font-bold mb-2">One-time Payment</h3>
@@ -111,40 +111,6 @@ export default function LandingPage() {
                                     className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 transition-colors rounded-lg font-semibold"
                                 >
                                     Get Started
-                                </button>
-                            </div>
-
-                            {/* Monthly Subscription Card */}
-                            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/50 hover:border-purple-500 transition-colors transform scale-105">
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 px-4 py-1 rounded-full text-sm">
-                                    Popular Choice
-                                </div>
-                                <h3 className="text-xl font-bold mb-2">Monthly Plan</h3>
-                                <div className="text-4xl font-bold text-purple-400 mb-4">$5</div>
-                                <p className="text-gray-300 mb-6">Per month, cancel anytime</p>
-                                <ul className="text-left text-gray-400 mb-6 space-y-2">
-                                    <li className="flex items-center">
-                                        <span className="text-green-400 mr-2">✓</span>
-                                        All premium features
-                                    </li>
-                                    <li className="flex items-center">
-                                        <span className="text-green-400 mr-2">✓</span>
-                                        Monthly updates
-                                    </li>
-                                    <li className="flex items-center">
-                                        <span className="text-green-400 mr-2">✓</span>
-                                        Cancel anytime
-                                    </li>
-                                </ul>
-                                <button
-                                    onClick={() => {
-                                        setAuthMode('register');
-                                        setSelectedPlan('monthly');
-                                        setShowAuthModal(true);
-                                    }}
-                                    className="w-full py-3 px-4 bg-purple-500 hover:bg-purple-600 transition-colors rounded-lg font-semibold"
-                                >
-                                    Subscribe Now
                                 </button>
                             </div>
 

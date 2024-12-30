@@ -7,7 +7,7 @@ export default function Pricing({ onSelectPlan }) {
                 <div className="flex justify-between items-baseline mb-4">
                     <div className="text-lg font-semibold">Access Pass</div>
                     <div className="flex items-baseline">
-                        <span className="text-3xl font-bold">$1</span>
+                        <span className="text-3xl font-bold">$10</span>
                         <span className="text-gray-400 ml-2 text-sm">one-time</span>
                     </div>
                 </div>
