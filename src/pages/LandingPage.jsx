@@ -28,32 +28,32 @@ export default function LandingPage() {
             {/* Navigation */}
             <nav className="fixed top-0 left-0 right-0 bg-black/30 backdrop-blur-sm border-b border-white/10 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                    <div className="text-xl font-bold">Pool Scoring Pro</div>
+                    <div className="text-lg sm:text-xl font-bold">Pool Scoring Pro</div>
                     <div>
                         {user ? (
-                            <div className="flex items-center gap-4">
-                                <span className="text-gray-300">Welcome, {user.name}</span>
+                            <div className="flex items-center gap-2 sm:gap-4">
+                                <span className="text-gray-300 text-sm sm:text-base">Welcome, {user.name}</span>
                                 <Link
                                     to="/pool-scoring"
-                                    className="px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors text-white"
+                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors text-white text-sm sm:text-base"
                                 >
                                     Go to App
                                 </Link>
                                 <button
                                     onClick={logout}
-                                    className="px-4 py-2 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm sm:text-base"
                                 >
                                     Logout
                                 </button>
                             </div>
                         ) : (
-                            <div className="flex gap-4">
+                            <div className="flex gap-2 sm:gap-4">
                                 <button
                                     onClick={() => {
                                         setAuthMode('login');
                                         setShowAuthModal(true);
                                     }}
-                                    className="px-4 py-2 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
+                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors text-sm sm:text-base"
                                 >
                                     Login
                                 </button>
@@ -62,7 +62,7 @@ export default function LandingPage() {
                                         setAuthMode('register');
                                         setShowAuthModal(true);
                                     }}
-                                    className="px-4 py-2 rounded-full bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors text-sm sm:text-base"
                                 >
                                     Register
                                 </button>
@@ -73,22 +73,22 @@ export default function LandingPage() {
             </nav>
 
             {/* Hero Section with Pricing */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-8 sm:pb-16">
                 <div className="text-center">
-                    <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
                         Straight Pool Scoring System
                     </h1>
-                    <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto">
+                    <p className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-8 sm:mb-12 max-w-3xl mx-auto px-4">
                         The ultimate digital scoring solution for straight pool players and tournaments.
                     </p>
                     {!user ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 max-w-5xl mx-auto px-4">
                             {/* One-time Payment Card */}
-                            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500/50 transition-colors">
-                                <h3 className="text-xl font-bold mb-2">One-time Payment</h3>
-                                <div className="text-4xl font-bold text-blue-400 mb-4">$10</div>
-                                <p className="text-gray-300 mb-6">Lifetime access to all features</p>
-                                <ul className="text-left text-gray-400 mb-6 space-y-2">
+                            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-700 hover:border-blue-500/50 transition-colors">
+                                <h3 className="text-lg sm:text-xl font-bold mb-2">One-time Payment</h3>
+                                <div className="text-3xl sm:text-4xl font-bold text-blue-400 mb-3 sm:mb-4">$10</div>
+                                <p className="text-gray-300 mb-4 sm:mb-6 text-sm sm:text-base">Lifetime access to all features</p>
+                                <ul className="text-left text-gray-400 mb-4 sm:mb-6 space-y-2 text-sm sm:text-base">
                                     <li className="flex items-center">
                                         <span className="text-green-400 mr-2">✓</span>
                                         Full access forever
@@ -108,20 +108,20 @@ export default function LandingPage() {
                                         setSelectedPlan('one-time');
                                         setShowAuthModal(true);
                                     }}
-                                    className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 transition-colors rounded-lg font-semibold"
+                                    className="w-full py-2 sm:py-3 px-3 sm:px-4 bg-blue-500 hover:bg-blue-600 transition-colors rounded-lg font-semibold text-sm sm:text-base"
                                 >
                                     Get Started
                                 </button>
                             </div>
 
                             {/* Login Card */}
-                            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-green-500/50 transition-colors">
-                                <h3 className="text-xl font-bold mb-2">Existing User?</h3>
-                                <div className="text-4xl font-bold text-green-400 mb-4">
-                                    <span className="text-3xl">👋</span>
+                            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-700 hover:border-green-500/50 transition-colors">
+                                <h3 className="text-lg sm:text-xl font-bold mb-2">Existing User?</h3>
+                                <div className="text-3xl sm:text-4xl font-bold text-green-400 mb-3 sm:mb-4">
+                                    <span className="text-2xl sm:text-3xl">👋</span>
                                 </div>
-                                <p className="text-gray-300 mb-6">Welcome back!</p>
-                                <ul className="text-left text-gray-400 mb-6 space-y-2">
+                                <p className="text-gray-300 mb-4 sm:mb-6 text-sm sm:text-base">Welcome back!</p>
+                                <ul className="text-left text-gray-400 mb-4 sm:mb-6 space-y-2 text-sm sm:text-base">
                                     <li className="flex items-center">
                                         <span className="text-green-400 mr-2">✓</span>
                                         Quick access
@@ -140,7 +140,7 @@ export default function LandingPage() {
                                         setAuthMode('login');
                                         setShowAuthModal(true);
                                     }}
-                                    className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 transition-colors rounded-lg font-semibold"
+                                    className="w-full py-2 sm:py-3 px-3 sm:px-4 bg-green-500 hover:bg-green-600 transition-colors rounded-lg font-semibold text-sm sm:text-base"
                                 >
                                     Login Now
                                 </button>
@@ -150,7 +150,7 @@ export default function LandingPage() {
                         <Link
                             to="/pool-scoring"
                             className="inline-block bg-gradient-to-r from-blue-500 to-purple-600 
-                                px-8 py-4 rounded-full text-lg font-semibold
+                                px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold
                                 hover:from-blue-600 hover:to-purple-700 
                                 transform hover:scale-105 transition-all
                                 shadow-lg hover:shadow-xl"
