@@ -49,7 +49,9 @@ export const StripeProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Origin': 'https://pool-scoring-frontend.vercel.app'
         },
+        mode: 'cors',
         body: JSON.stringify({ isMonthly }),
       });
 
