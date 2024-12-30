@@ -35,7 +35,8 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Login failed');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
       }
 
       const data = await response.json();
@@ -45,6 +46,7 @@ export const AuthProvider = ({ children }) => {
       navigate('/pool-scoring');
       return data;
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
@@ -61,7 +63,8 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Registration failed');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
       }
 
       const data = await response.json();
@@ -69,6 +72,7 @@ export const AuthProvider = ({ children }) => {
       await login(email, password);
       return data;
     } catch (error) {
+      console.error('Registration error:', error);
       throw error;
     }
   };

@@ -5,16 +5,20 @@ export default function LoginForm({ onClose }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     
     try {
       await login(email, password);
     } catch (err) {
-      setError('Invalid email or password');
+      setError(err.message || 'Invalid email or password');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -58,9 +62,11 @@ export default function LoginForm({ onClose }) {
         </div>
         <button
           type="submit"
-          className="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          disabled={isLoading}
+          className={`w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 
+            transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          Login
+          {isLoading ? 'Logging in...' : 'Login'}
         </button>
       </form>
     </div>

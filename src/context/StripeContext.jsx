@@ -4,10 +4,9 @@ import { Elements } from '@stripe/react-stripe-js';
 
 // Define API URL based on environment
 const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://pool-scoring-backend.vercel.app'  // Production backend URL
+  ? 'https://pool-scoring-backend-production.up.railway.app'  // Production backend URL
   : 'http://localhost:3001';                   // Development URL
 
-console.log('Stripe Key:', process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 const StripeContext = createContext(null);
 
@@ -22,13 +21,12 @@ export const StripeProvider = ({ children }) => {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        credentials: 'include',
-        mode: 'cors',
         body: JSON.stringify({ isMonthly }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create payment intent');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to create payment intent');
       }
 
       const data = await response.json();

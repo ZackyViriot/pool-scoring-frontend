@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useStripe as useStripeContext } from '../../context/StripeContext';
-import { useNavigate } from 'react-router-dom';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 export default function RegisterForm({ onClose }) {
   const [step, setStep] = useState('payment');
@@ -19,7 +18,6 @@ export default function RegisterForm({ onClose }) {
   const { createPaymentIntent } = useStripeContext();
   const stripe = useStripe();
   const elements = useElements();
-  const navigate = useNavigate();
 
   const cardStyle = {
     style: {
@@ -31,6 +29,7 @@ export default function RegisterForm({ onClose }) {
         '::placeholder': {
           color: '#6b7280',
         },
+        backgroundColor: 'transparent',
       },
       invalid: {
         color: '#fa755a',
@@ -57,11 +56,19 @@ export default function RegisterForm({ onClose }) {
       }
 
       const clientSecret = await createPaymentIntent(isMonthly);
-      const cardElement = elements.getElement(CardElement);
+      
+      // Get the card elements
+      const cardNumber = elements.getElement(CardNumberElement);
+      const cardExpiry = elements.getElement(CardExpiryElement);
+      const cardCvc = elements.getElement(CardCvcElement);
+
+      if (!cardNumber || !cardExpiry || !cardCvc) {
+        throw new Error('Please fill in all card details');
+      }
 
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
-        card: cardElement,
+        card: cardNumber,
       });
 
       if (error) {
@@ -157,8 +164,28 @@ export default function RegisterForm({ onClose }) {
             </p>
           </div>
 
-          <div className="p-4 bg-black/30 rounded-lg border border-gray-700">
-            <CardElement options={cardStyle} />
+          <div className="space-y-4 bg-black/30 rounded-lg border border-gray-700 p-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Card Number</label>
+              <div className="p-3 bg-black/30 rounded border border-gray-700">
+                <CardNumberElement options={cardStyle} />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Expiration Date</label>
+                <div className="p-3 bg-black/30 rounded border border-gray-700">
+                  <CardExpiryElement options={cardStyle} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">CVC</label>
+                <div className="p-3 bg-black/30 rounded border border-gray-700">
+                  <CardCvcElement options={cardStyle} />
+                </div>
+              </div>
+            </div>
           </div>
 
           <button
