@@ -69,6 +69,7 @@ export default function PoolScoringComponent() {
     const [showWinModal, setShowWinModal] = useState(false);
     const [winner, setWinner] = useState(null);
     const [winnerStats, setWinnerStats] = useState(null);
+    const [showGameStats, setShowGameStats] = useState(false);
 
     // Theme state
     const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -244,7 +245,8 @@ export default function PoolScoringComponent() {
         player2,
         turnHistory,
         player1FoulHistory,
-        player2FoulHistory
+        player2FoulHistory,
+        saveGameState
     ]);
 
     // Clear localStorage when game ends
@@ -487,18 +489,17 @@ export default function PoolScoringComponent() {
 
         saveStateToHistory();
         saveGameState();
-        const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
         
         // Add to turn history
         addToTurnHistory(playerNum, 'Break Scratch', -2);
 
-        setPlayer({
-            ...player,
-            score: player.score - 2,
-            fouls: player.fouls + 1,
+        setPlayer(prev => ({
+            ...prev,
+            score: prev.score - 2,
+            fouls: prev.fouls + 1,
             currentRun: 0
-        });
+        }));
         
         setActivePlayer(playerNum === 1 ? 2 : 1);
         setIsBreakShot(false);
@@ -601,9 +602,22 @@ export default function PoolScoringComponent() {
 
     const closeWinModal = () => {
         setShowWinModal(false);
+        setShowGameStats(false);
+        setWinner(null);
+        setWinnerStats(null);
+    };
+
+    const startNewGame = () => {
+        setShowWinModal(false);
+        setShowGameStats(false);
         setWinner(null);
         setWinnerStats(null);
         endGame();
+    };
+
+    // Add this function to handle showing stats
+    const toggleGameStats = () => {
+        setShowGameStats(!showGameStats);
     };
 
     const switchTurn = () => {
@@ -619,7 +633,6 @@ export default function PoolScoringComponent() {
             setActivePlayer(activePlayer === 1 ? 2 : 1);
             
             // Reset current run for the player who just finished their turn
-            const currentPlayer = activePlayer === 1 ? player1 : player2;
             const setCurrentPlayer = activePlayer === 1 ? setPlayer1 : setPlayer2;
             
             setCurrentPlayer(prev => ({
@@ -1301,16 +1314,28 @@ export default function PoolScoringComponent() {
                     </div>
                 )}
 
+                {/* Add a View Stats button when there's a winner but modal is closed */}
+                {winner && !showWinModal && (
+                    <button
+                        onClick={toggleGameStats}
+                        className="fixed bottom-20 right-4 px-4 py-2 rounded-lg
+                            bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 
+                            transition-colors z-50"
+                    >
+                        View Stats
+                    </button>
+                )}
+
                 {/* Win Modal */}
-                {showWinModal && (
+                {(showWinModal || showGameStats) && (
                     <>
-                        <Confetti
+                        {showWinModal && <Confetti
                             width={windowSize.width}
                             height={windowSize.height}
                             numberOfPieces={200}
                             recycle={false}
                             colors={['#60A5FA', '#34D399', '#F87171', '#FBBF24']}
-                        />
+                        />}
                         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm 
                             flex items-center justify-center z-50">
                             <div className={`rounded-xl p-8 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto
@@ -1319,9 +1344,18 @@ export default function PoolScoringComponent() {
                                     ? 'bg-gradient-to-b from-gray-800 to-gray-900 border border-white/10' 
                                     : 'bg-gradient-to-b from-white to-gray-50 border border-gray-200'}`}>
                                 
-                                <h2 className="text-4xl font-bold text-center text-purple-400 mb-4">
-                                    🏆 Game Over 🏆
-                                </h2>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-4xl font-bold text-purple-400">
+                                        🏆 Game Over 🏆
+                                    </h2>
+                                    <button
+                                        onClick={showWinModal ? closeWinModal : toggleGameStats}
+                                        className="p-2 rounded-full hover:bg-gray-700/50"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
                                 <p className="text-2xl font-medium text-center mb-6">
                                     Winner: {winner === 1 ? player1.name || 'Player 1' : player2.name || 'Player 2'}
                                 </p>
@@ -1408,7 +1442,7 @@ export default function PoolScoringComponent() {
                                 <div className="text-center mt-6">
                                     <p className="opacity-60 mb-2">Game Time: {formatTime(gameTime)}</p>
                                     <button
-                                        onClick={closeWinModal}
+                                        onClick={startNewGame}
                                         className="px-8 py-3 bg-purple-500/20 hover:bg-purple-500/30 
                                             text-purple-300 rounded-full transition-colors text-lg"
                                     >
