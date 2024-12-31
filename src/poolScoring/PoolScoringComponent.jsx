@@ -189,14 +189,22 @@ export default function PoolScoringComponent() {
     const undoLastAction = () => {
         if (scoreHistory.length > 0) {
             const lastAction = scoreHistory[scoreHistory.length - 1];
+            
+            // Restore player states
             setPlayer1(lastAction.player1);
             setPlayer2(lastAction.player2);
+            
+            // Restore game state
             setActivePlayer(lastAction.activePlayer);
             setCurrentInning(lastAction.currentInning);
             setObjectBallsOnTable(lastAction.objectBallsOnTable);
             setPlayer1FoulHistory(lastAction.player1FoulHistory || []);
             setPlayer2FoulHistory(lastAction.player2FoulHistory || []);
+            setIsBreakShot(lastAction.isBreakShot || false);
+            
+            // Remove the last action from history
             setScoreHistory(prev => prev.slice(0, -1));
+            setTurnHistory(prev => prev.slice(0, -1));
         }
     };
 
@@ -284,9 +292,26 @@ export default function PoolScoringComponent() {
         setTurnHistory(prev => [...prev, turnEntry]);
     };
 
+    // Add this function near the top with other state management functions
+    const saveStateToHistory = () => {
+        const currentState = {
+            player1,
+            player2,
+            activePlayer,
+            currentInning,
+            objectBallsOnTable,
+            player1FoulHistory,
+            player2FoulHistory,
+            isBreakShot,
+            turnHistory: [...turnHistory]
+        };
+        setScoreHistory(prev => [...prev, currentState]);
+    };
+
     const adjustScore = (playerNum, amount) => {
         if (playerNum !== activePlayer || !gameStarted) return;
 
+        saveStateToHistory();
         saveGameState();
 
         const currentPlayerState = playerNum === 1 ? player1 : player2;
@@ -376,6 +401,7 @@ export default function PoolScoringComponent() {
     const handleFoul = (playerNum) => {
         if (playerNum !== activePlayer || !gameStarted) return;
 
+        saveStateToHistory();
         saveGameState();
         const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
@@ -405,6 +431,7 @@ export default function PoolScoringComponent() {
     const handleSafe = (playerNum) => {
         if (playerNum !== activePlayer || !gameStarted) return;
 
+        saveStateToHistory();
         saveGameState();
         const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
@@ -431,6 +458,7 @@ export default function PoolScoringComponent() {
     const handleMiss = (playerNum) => {
         if (playerNum !== activePlayer || !gameStarted) return;
 
+        saveStateToHistory();
         saveGameState();
         const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
@@ -457,6 +485,7 @@ export default function PoolScoringComponent() {
         // Only allow actions for active player
         if (playerNum !== activePlayer || !gameStarted) return;
 
+        saveStateToHistory();
         saveGameState();
         const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
@@ -478,6 +507,7 @@ export default function PoolScoringComponent() {
     const handleScratch = (playerNum) => {
         if (playerNum !== activePlayer || !gameStarted) return;
 
+        saveStateToHistory();
         saveGameState();
         const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
@@ -578,6 +608,7 @@ export default function PoolScoringComponent() {
 
     const switchTurn = () => {
         if (gameStarted) {
+            saveStateToHistory();
             saveGameState();
             
             // If current player is player 2, we're completing a full inning
@@ -683,6 +714,7 @@ export default function PoolScoringComponent() {
     const handleIntentionalFoul = (playerNum) => {
         if (playerNum !== activePlayer || !gameStarted) return;
 
+        saveStateToHistory();
         saveGameState();
         const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
@@ -778,6 +810,7 @@ export default function PoolScoringComponent() {
     const finishRack = (playerNum) => {
         if (playerNum !== activePlayer || !gameStarted) return;
 
+        saveStateToHistory();
         saveGameState();
         const currentPlayerState = playerNum === 1 ? player1 : player2;
         const setCurrentPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
