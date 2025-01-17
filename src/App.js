@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { StripeProvider } from './context/StripeContext';
 import PoolScoringComponent from './poolScoring/PoolScoringComponent';
 import LandingPage from './pages/LandingPage';
+import History from './pages/History.tsx';
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
@@ -33,6 +34,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PoolScoringComponent />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <History />
           </ProtectedRoute>
         }
       />

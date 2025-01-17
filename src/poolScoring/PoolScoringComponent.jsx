@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import Confetti from 'react-confetti';
 import useSound from 'use-sound';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:8000';
 
 export default function PoolScoringComponent() {
     // Game state
@@ -95,14 +98,20 @@ export default function PoolScoringComponent() {
             name: "",
             score: 0,
             handicap: 0,
-            high: 0,
+            totalPoints: 0,
+            totalInnings: 0,
+            breakAndRuns: 0,
+            safetyPlays: 0,
             safes: 0,
-            misses: 0,
+            defensiveShots: 0,
+            scratches: 0,
+            avgPointsPerInning: 0,
             fouls: 0,
             intentionalFouls: 0,
-            scratches: 0,
+            misses: 0,
+            bestRun: 0,
             currentRun: 0,
-            bestGameRun: 0
+            breakingFouls: 0
         };
     });
 
@@ -112,15 +121,27 @@ export default function PoolScoringComponent() {
             name: "",
             score: 0,
             handicap: 0,
-            high: 0,
+            totalPoints: 0,
+            totalInnings: 0,
+            breakAndRuns: 0,
+            safetyPlays: 0,
             safes: 0,
-            misses: 0,
+            defensiveShots: 0,
+            scratches: 0,
+            avgPointsPerInning: 0,
             fouls: 0,
             intentionalFouls: 0,
-            scratches: 0,
+            misses: 0,
+            bestRun: 0,
             currentRun: 0,
-            bestGameRun: 0
+            breakingFouls: 0
         };
+    });
+
+    // GameType state
+    const [gameType, setGameType] = useState(() => {
+        const saved = localStorage.getItem('poolGame');
+        return saved ? JSON.parse(saved).gameType : 'Straight Pool';
     });
 
     // Theme effect
@@ -191,9 +212,32 @@ export default function PoolScoringComponent() {
         if (scoreHistory.length > 0) {
             const lastAction = scoreHistory[scoreHistory.length - 1];
             
-            // Restore player states
-            setPlayer1(lastAction.player1);
-            setPlayer2(lastAction.player2);
+            // Save current state before restoring
+            const currentState = {
+                player1,
+                player2,
+                activePlayer,
+                currentInning,
+                objectBallsOnTable,
+                player1FoulHistory,
+                player2FoulHistory,
+                isBreakShot,
+                turnHistory: [...turnHistory]
+            };
+            
+            // Restore player states with all properties
+            setPlayer1({
+                ...player1,
+                ...lastAction.player1,
+                name: player1.name, // Preserve current name
+                handicap: player1.handicap // Preserve handicap
+            });
+            setPlayer2({
+                ...player2,
+                ...lastAction.player2,
+                name: player2.name, // Preserve current name
+                handicap: player2.handicap // Preserve handicap
+            });
             
             // Restore game state
             setActivePlayer(lastAction.activePlayer);
@@ -206,6 +250,9 @@ export default function PoolScoringComponent() {
             // Remove the last action from history
             setScoreHistory(prev => prev.slice(0, -1));
             setTurnHistory(prev => prev.slice(0, -1));
+
+            // Save the restored state
+            saveGameState();
         }
     };
 
@@ -226,7 +273,8 @@ export default function PoolScoringComponent() {
             player2FoulHistory,
             turnHistory,
             player1,
-            player2
+            player2,
+            gameType
         };
         localStorage.setItem('poolGame', JSON.stringify(gameState));
     };
@@ -297,8 +345,30 @@ export default function PoolScoringComponent() {
     // Add this function near the top with other state management functions
     const saveStateToHistory = () => {
         const currentState = {
-            player1,
-            player2,
+            player1: {
+                ...player1,
+                score: player1.score,
+                high: player1.high,
+                safes: player1.safes,
+                misses: player1.misses,
+                fouls: player1.fouls,
+                intentionalFouls: player1.intentionalFouls,
+                scratches: player1.scratches,
+                currentRun: player1.currentRun,
+                bestGameRun: player1.bestGameRun
+            },
+            player2: {
+                ...player2,
+                score: player2.score,
+                high: player2.high,
+                safes: player2.safes,
+                misses: player2.misses,
+                fouls: player2.fouls,
+                intentionalFouls: player2.intentionalFouls,
+                scratches: player2.scratches,
+                currentRun: player2.currentRun,
+                bestGameRun: player2.bestGameRun
+            },
             activePlayer,
             currentInning,
             objectBallsOnTable,
@@ -308,6 +378,34 @@ export default function PoolScoringComponent() {
             turnHistory: [...turnHistory]
         };
         setScoreHistory(prev => [...prev, currentState]);
+    };
+
+    const handleWin = (playerNum, newScore, newCurrentRun, newBestRun) => {
+        const updatedPlayer = playerNum === 1 
+            ? { ...player1, score: newScore, currentRun: newCurrentRun, bestRun: newBestRun }
+            : { ...player2, score: newScore, currentRun: newCurrentRun, bestRun: newBestRun };
+        
+        const otherPlayer = playerNum === 1 ? player2 : player1;
+        
+        // Calculate final stats for both players
+        const player1FinalStats = calculatePlayerStats(playerNum === 1 ? updatedPlayer : player1, 1);
+        const player2FinalStats = calculatePlayerStats(playerNum === 2 ? updatedPlayer : player2, 2);
+        
+        setWinner(playerNum);
+        setWinnerStats(playerNum === 1 ? player1FinalStats : player2FinalStats);
+        setShowWinModal(true);
+        setIsTimerRunning(false);
+        playWinSound();
+
+        // Save match with the final stats
+        saveMatchToDatabase({
+            winner: updatedPlayer,
+            loser: otherPlayer,
+            finalScore1: playerNum === 1 ? newScore : otherPlayer.score,
+            finalScore2: playerNum === 1 ? otherPlayer.score : newScore,
+            player1FinalStats,
+            player2FinalStats
+        }, gameTime);
     };
 
     const adjustScore = (playerNum, amount) => {
@@ -321,7 +419,7 @@ export default function PoolScoringComponent() {
         const setFoulHistory = playerNum === 1 ? setPlayer1FoulHistory : setPlayer2FoulHistory;
         const newScore = currentPlayerState.score + amount;
         const newCurrentRun = amount > 0 ? currentPlayerState.currentRun + amount : 0;
-        const newBestGameRun = Math.max(currentPlayerState.bestGameRun, newCurrentRun);
+        const newBestRun = Math.max(currentPlayerState.bestRun || 0, newCurrentRun);
         
         addToTurnHistory(playerNum, 'Points', amount);
 
@@ -342,19 +440,15 @@ export default function PoolScoringComponent() {
             ...prev,
             score: newScore,
             currentRun: newCurrentRun,
-            high: Math.max(prev.high, newCurrentRun),
-            bestGameRun: newBestGameRun
+            bestRun: newBestRun,
+            totalPoints: (prev.totalPoints || 0) + (amount > 0 ? amount : 0),  // Only add positive points to totalPoints
+            totalInnings: amount <= 0 ? (prev.totalInnings || 0) + 1 : prev.totalInnings || 0
         }));
 
         // Check for win condition before switching turns
         if (newScore >= targetGoal) {
-            const stats = calculateStats(currentPlayerState);
-            setWinner(playerNum);
-            setWinnerStats(stats);
-            setShowWinModal(true);
-            setIsTimerRunning(false);
-            playWinSound();
-            return;  // Don't switch turns if game is won
+            handleWin(playerNum, newScore, newCurrentRun, newBestRun);
+            return;
         }
 
         // Only switch turns if no points were scored
@@ -364,10 +458,6 @@ export default function PoolScoringComponent() {
             }
             
             setActivePlayer(playerNum === 1 ? 2 : 1);
-            setCurrentPlayer(prev => ({
-                ...prev,
-                currentRun: 0
-            }));
         }
     };
 
@@ -377,12 +467,11 @@ export default function PoolScoringComponent() {
         const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
 
-        // Add current turn to foul history
-        const updatedHistory = [...foulHistory, true].slice(-3);
-        setFoulHistory(updatedHistory);
-
+        // Add current turn to foul history first
+        const updatedHistory = [...foulHistory, true];
+        
         // Check if player has 3 fouls in their last 3 turns
-        if (updatedHistory.length === 3 && updatedHistory.every(foul => foul)) {
+        if (updatedHistory.length >= 3 && updatedHistory.slice(-3).every(foul => foul)) {
             setPlayer(prev => ({
                 ...prev,
                 score: prev.score - 16  // Full -16 penalty (includes the current foul)
@@ -390,8 +479,11 @@ export default function PoolScoringComponent() {
             // Reset foul history after applying penalty
             setFoulHistory([]);
             return true;
+        } else {
+            // Only keep the last 3 fouls in history
+            setFoulHistory(updatedHistory.slice(-3));
+            return false;
         }
-        return false;
     };
 
     // Add this function to check for 2 consecutive fouls
@@ -405,24 +497,28 @@ export default function PoolScoringComponent() {
 
         saveStateToHistory();
         saveGameState();
-        const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
         
-        addToTurnHistory(playerNum, 'Foul', -1);
-
-        setPlayer({
-            ...player,
-            score: player.score - 1,
-            fouls: player.fouls + 1,
-            currentRun: 0
-        });
+        setPlayer(prev => ({
+            ...prev,
+            score: prev.score - 1,
+            fouls: (prev.fouls || 0) + 1,
+            currentRun: 0,
+            totalInnings: (prev.totalInnings || 0) + 1,
+            totalPoints: prev.totalPoints || 0  // Ensure totalPoints is initialized
+        }));
 
         const isThreeFoulPenalty = checkThreeFouls(playerNum);
+        
+        addToTurnHistory(playerNum, 'Foul', -1);
         if (isThreeFoulPenalty) {
             addToTurnHistory(playerNum, 'Three Foul Penalty', -16);
+            setPlayer(prev => ({
+                ...prev,
+                score: prev.score - 16
+            }));
         }
         
-        // Increment inning if Player 2's turn is ending
         if (playerNum === 2) {
             setCurrentInning(prev => prev + 1);
         }
@@ -435,21 +531,19 @@ export default function PoolScoringComponent() {
 
         saveStateToHistory();
         saveGameState();
-        const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
-        const setFoulHistory = playerNum === 1 ? setPlayer1FoulHistory : setPlayer2FoulHistory;
         
         addToTurnHistory(playerNum, 'Safe', 0);
 
-        setPlayer({
-            ...player,
-            safes: player.safes + 1,
-            currentRun: 0
-        });
+        setPlayer(prev => ({
+            ...prev,
+            safes: (prev.safes || 0) + 1,
+            safetyPlays: (prev.safetyPlays || 0) + 1,
+            defensiveShots: (prev.defensiveShots || 0) + 1,
+            currentRun: 0,
+            totalInnings: prev.totalInnings + 1
+        }));
         
-        setFoulHistory([]);
-        
-        // Increment inning if Player 2's turn is ending
         if (playerNum === 2) {
             setCurrentInning(prev => prev + 1);
         }
@@ -462,19 +556,16 @@ export default function PoolScoringComponent() {
 
         saveStateToHistory();
         saveGameState();
-        const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
-        const setFoulHistory = playerNum === 1 ? setPlayer1FoulHistory : setPlayer2FoulHistory;
         
         addToTurnHistory(playerNum, 'Miss', 0);
 
-        setPlayer({
-            ...player,
-            misses: player.misses + 1,
-            currentRun: 0
-        });
-        
-        setFoulHistory([]);  // Reset foul history on miss
+        setPlayer(prev => ({
+            ...prev,
+            misses: (prev.misses || 0) + 1,
+            currentRun: 0,
+            totalInnings: prev.totalInnings + 1
+        }));
         
         if (playerNum === 2) {
             setCurrentInning(prev => prev + 1);
@@ -498,7 +589,8 @@ export default function PoolScoringComponent() {
             ...prev,
             score: prev.score - 2,
             fouls: prev.fouls + 1,
-            currentRun: 0
+            currentRun: 0,
+            totalInnings: prev.totalInnings + 1
         }));
         
         setActivePlayer(playerNum === 1 ? 2 : 1);
@@ -510,25 +602,20 @@ export default function PoolScoringComponent() {
 
         saveStateToHistory();
         saveGameState();
-        const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
         
+        setPlayer(prev => ({
+            ...prev,
+            score: prev.score - 1,
+            scratches: (prev.scratches || 0) + 1,
+            fouls: (prev.fouls || 0) + 1,
+            currentRun: 0,
+            totalInnings: (prev.totalInnings || 0) + 1,
+            totalPoints: prev.totalPoints || 0  // Ensure totalPoints is initialized
+        }));
+
         addToTurnHistory(playerNum, 'Scratch', -1);
-
-        setPlayer({
-            ...player,
-            score: player.score - 1,
-            scratches: player.scratches + 1,
-            fouls: player.fouls + 1,
-            currentRun: 0
-        });
-
-        const isThreeFoulPenalty = checkThreeFouls(playerNum);
-        if (isThreeFoulPenalty) {
-            addToTurnHistory(playerNum, 'Three Foul Penalty', -16);
-        }
         
-        // Increment inning if Player 2's turn is ending
         if (playerNum === 2) {
             setCurrentInning(prev => prev + 1);
         }
@@ -561,36 +648,54 @@ export default function PoolScoringComponent() {
         const player1Handicap = Number(player1.handicap) || 0;
         const player2Handicap = Number(player2.handicap) || 0;
         
-        // If player 1 has higher handicap, player 2 starts with the difference
-        // If player 2 has higher handicap, player 1 starts with the difference
         const handicapDifference = player1Handicap - player2Handicap;
         
-        // Reset scores and stats
+        // Initialize player1 with all stats from backend schema
         setPlayer1(prev => ({
             ...prev,
-            name: prev.name || "Player 1",  // Ensure default name is set
+            name: prev.name || "Player 1",
             score: handicapDifference < 0 ? Math.abs(handicapDifference) : 0,
-            high: 0,
+            handicap: player1Handicap,
+            totalPoints: 0,
+            totalInnings: 0,
+            breakAndRuns: 0,
+            safetyPlays: 0,
             safes: 0,
-            misses: 0,
+            defensiveShots: 0,
+            scratches: 0,
+            avgPointsPerInning: 0,
             fouls: 0,
-            currentRun: 0,
-            bestGameRun: 0
-        }));
-        
-        setPlayer2(prev => ({
-            ...prev,
-            name: prev.name || "Player 2",  // Ensure default name is set
-            score: handicapDifference > 0 ? handicapDifference : 0,
-            high: 0,
-            safes: 0,
+            intentionalFouls: 0,
+            breakingFouls: 0,
             misses: 0,
-            fouls: 0,
+            bestRun: 0,
             currentRun: 0,
-            bestGameRun: 0
+            runHistory: []
         }));
 
-        // Add handicap application to turn history if there was a handicap
+        // Initialize player2 with all stats from backend schema
+        setPlayer2(prev => ({
+            ...prev,
+            name: prev.name || "Player 2",
+            score: handicapDifference > 0 ? handicapDifference : 0,
+            handicap: player2Handicap,
+            totalPoints: 0,
+            totalInnings: 0,
+            breakAndRuns: 0,
+            safetyPlays: 0,
+            safes: 0,
+            defensiveShots: 0,
+            scratches: 0,
+            avgPointsPerInning: 0,
+            fouls: 0,
+            intentionalFouls: 0,
+            breakingFouls: 0,
+            misses: 0,
+            bestRun: 0,
+            currentRun: 0,
+            runHistory: []
+        }));
+
         if (handicapDifference !== 0) {
             if (handicapDifference > 0) {
                 addToTurnHistory(2, 'Handicap Applied', handicapDifference);
@@ -650,36 +755,68 @@ export default function PoolScoringComponent() {
     // Add this function to generate detailed player stats
     const generateDetailedStats = (playerNum) => {
         const player = playerNum === 1 ? player1 : player2;
-        const playerHistory = turnHistory.filter(turn => turn.playerNum === playerNum);
         
-        const fouls = playerHistory.filter(turn => turn.action === 'Foul' || turn.action === 'Break Scratch');
-        const safes = playerHistory.filter(turn => turn.action === 'Safe');
-        const misses = playerHistory.filter(turn => turn.action === 'Miss');
-        const points = playerHistory.filter(turn => turn.action === 'Points' && turn.points > 0);
-        
+        // Process turn history to get details
+        const details = turnHistory.reduce((acc, turn) => {
+            if (turn.playerNum === playerNum) {
+                // Track fouls
+                if (turn.action === 'Foul' || turn.action === 'Breaking Foul' || 
+                    turn.action === 'Breaking Foul - Rebreak' || turn.action === 'Intentional Foul') {
+                    acc.foulDetails.push({
+                        inning: turn.inning,
+                        type: turn.action,
+                        points: turn.points
+                    });
+                }
+                
+                // Track safes
+                if (turn.action === 'Safe') {
+                    acc.safeDetails.push({
+                        inning: turn.inning,
+                        timestamp: turn.timestamp
+                    });
+                }
+                
+                // Track misses
+                if (turn.action === 'Miss') {
+                    acc.missDetails.push({
+                        inning: turn.inning,
+                        timestamp: turn.timestamp
+                    });
+                }
+                
+                // Track scoring runs
+                if (turn.action === 'Points' || turn.action === 'Finish Rack') {
+                    acc.runDetails.push({
+                        inning: turn.inning,
+                        points: turn.points,
+                        timestamp: turn.timestamp
+                    });
+                }
+            }
+            return acc;
+        }, {
+            foulDetails: [],
+            safeDetails: [],
+            missDetails: [],
+            runDetails: []
+        });
+
+        // Calculate totals from the actual turn history
+        const totalFouls = details.foulDetails.length;
+        const totalSafes = details.safeDetails.length;
+        const totalMisses = details.missDetails.length;
+        const totalPoints = details.runDetails.reduce((sum, run) => sum + run.points, 0);
+        const bestRun = Math.max(...details.runDetails.map(run => run.points), 0);
+
         return {
             name: player.name || `Player ${playerNum}`,
-            totalScore: player.score,
-            bestRun: player.bestGameRun,
-            totalInnings: currentInning,
-            totalFouls: fouls.length,
-            totalSafes: safes.length,
-            totalMisses: misses.length,
-            foulDetails: fouls.map(f => ({
-                inning: f.inning,
-                type: f.action,
-                points: f.points
-            })),
-            safeDetails: safes.map(s => ({
-                inning: s.inning
-            })),
-            missDetails: misses.map(m => ({
-                inning: m.inning
-            })),
-            runDetails: points.map(p => ({
-                inning: p.inning,
-                points: p.points
-            }))
+            totalScore: player.score || 0,
+            bestRun: bestRun,
+            totalFouls: totalFouls,
+            totalSafes: totalSafes,
+            totalMisses: totalMisses,
+            ...details
         };
     };
 
@@ -701,7 +838,7 @@ export default function PoolScoringComponent() {
     );
 
     // Update the stats grid styling
-    const StatBox = ({ label, value, onClick, color = '' }) => (
+    const StatBox = ({ label, value, onClick, color = '', isSmallText = false }) => (
         <button 
             onClick={onClick}
             className={`bg-black/20 rounded-lg p-3 text-center 
@@ -711,7 +848,7 @@ export default function PoolScoringComponent() {
             <div className={`text-4xl font-bold ${color}`}>
                 {value}
             </div>
-            <div className="text-base font-semibold opacity-75">{label}</div>
+            <div className={`font-semibold opacity-75 ${isSmallText ? 'text-xs' : 'text-base'}`}>{label}</div>
         </button>
     );
 
@@ -729,22 +866,27 @@ export default function PoolScoringComponent() {
 
         saveStateToHistory();
         saveGameState();
-        const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
         
-        addToTurnHistory(playerNum, 'Intentional Foul', -1);
+        setPlayer(prev => ({
+            ...prev,
+            score: prev.score - 1,
+            fouls: (prev.fouls || 0) + 1,
+            intentionalFouls: (prev.intentionalFouls || 0) + 1,
+            currentRun: 0,
+            totalInnings: (prev.totalInnings || 0) + 1,
+            totalPoints: prev.totalPoints || 0  // Ensure totalPoints is initialized
+        }));
 
-        setPlayer({
-            ...player,
-            score: player.score - 1,
-            fouls: player.fouls + 1,  // Increment regular fouls too
-            intentionalFouls: player.intentionalFouls + 1,
-            currentRun: 0
-        });
+        addToTurnHistory(playerNum, 'Intentional Foul', -1);
 
         const isThreeFoulPenalty = checkThreeFouls(playerNum);
         if (isThreeFoulPenalty) {
             addToTurnHistory(playerNum, 'Three Foul Penalty', -16);
+            setPlayer(prev => ({
+                ...prev,
+                score: prev.score - 16
+            }));
         }
         
         if (playerNum === 2) {
@@ -764,22 +906,29 @@ export default function PoolScoringComponent() {
     // Update handleBreakFoulContinue function
     const handleBreakFoulContinue = () => {
         const playerNum = breakFoulPlayer;
-        const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
         
         saveGameState();
-        addToTurnHistory(playerNum, 'Breaking Foul', -2);
+        
+        setPlayer(prev => ({
+            ...prev,
+            score: prev.score - 2,
+            fouls: (prev.fouls || 0) + 1,
+            breakingFouls: (prev.breakingFouls || 0) + 1,
+            currentRun: 0,
+            totalInnings: (prev.totalInnings || 0) + 1,
+            totalPoints: prev.totalPoints || 0  // Ensure totalPoints is initialized
+        }));
 
-        setPlayer({
-            ...player,
-            score: player.score - 2,  // Changed from -1 to -2
-            fouls: player.fouls + 1,
-            currentRun: 0
-        });
+        addToTurnHistory(playerNum, 'Breaking Foul', -2);
 
         const isThreeFoulPenalty = checkThreeFouls(playerNum);
         if (isThreeFoulPenalty) {
             addToTurnHistory(playerNum, 'Three Foul Penalty', -16);
+            setPlayer(prev => ({
+                ...prev,
+                score: prev.score - 16
+            }));
         }
 
         if (playerNum === 2) {
@@ -794,18 +943,20 @@ export default function PoolScoringComponent() {
     // Update handleBreakFoulRebreak function
     const handleBreakFoulRebreak = () => {
         const playerNum = breakFoulPlayer;
-        const player = playerNum === 1 ? player1 : player2;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
         
         saveGameState();
-        addToTurnHistory(playerNum, 'Breaking Foul - Rebreak', -2);
-
-        setPlayer({
-            ...player,
-            score: player.score - 2,
-            fouls: player.fouls + 1,
+        
+        // Update player state with breaking foul
+        setPlayer(prev => ({
+            ...prev,
+            score: prev.score - 2,
+            fouls: (prev.fouls || 0) + 1,
+            breakingFouls: (prev.breakingFouls || 0) + 1,
             currentRun: 0
-        });
+        }));
+
+        addToTurnHistory(playerNum, 'Breaking Foul - Rebreak', -2);
 
         const isThreeFoulPenalty = checkThreeFouls(playerNum);
         if (isThreeFoulPenalty) {
@@ -838,6 +989,48 @@ export default function PoolScoringComponent() {
         const newScore = currentPlayerState.score + remainingBalls;
         const newCurrentRun = currentPlayerState.currentRun + remainingBalls;
 
+        // Check for win condition
+        if (newScore >= targetGoal) {
+            const updatedPlayer = {
+                ...currentPlayerState,
+                score: newScore,
+                currentRun: newCurrentRun,
+                high: Math.max(currentPlayerState.high, newCurrentRun),
+                bestGameRun: Math.max(currentPlayerState.bestGameRun, newCurrentRun)
+            };
+            
+            // Calculate final stats for both players
+            const player1FinalStats = calculatePlayerStats(playerNum === 1 ? updatedPlayer : player1, 1);
+            const player2FinalStats = calculatePlayerStats(playerNum === 2 ? updatedPlayer : player2, 2);
+            
+            setWinner(playerNum);
+            setWinnerStats(playerNum === 1 ? player1FinalStats : player2FinalStats);
+            setShowWinModal(true);
+            setIsTimerRunning(false);
+            playWinSound();
+
+            // Update the player's state without saving the match (will be saved in useEffect)
+            setCurrentPlayer(prev => ({
+                ...prev,
+                score: newScore,
+                currentRun: newCurrentRun,
+                high: Math.max(prev.high, newCurrentRun),
+                bestGameRun: Math.max(prev.bestGameRun, newCurrentRun)
+            }));
+
+            // Save match with the final stats
+            saveMatchToDatabase({
+                winner: updatedPlayer,
+                loser: playerNum === 1 ? player2 : player1,
+                finalScore1: playerNum === 1 ? newScore : player2.score,
+                finalScore2: playerNum === 1 ? player2.score : newScore,
+                player1FinalStats: playerNum === 1 ? player1FinalStats : player2FinalStats,
+                player2FinalStats: playerNum === 2 ? player1FinalStats : player2FinalStats
+            }, gameTime);
+            
+            return;  // Don't switch turns if game is won
+        }
+
         setCurrentPlayer(prev => ({
             ...prev,
             score: newScore,
@@ -845,15 +1038,236 @@ export default function PoolScoringComponent() {
             high: Math.max(prev.high, newCurrentRun),
             bestGameRun: Math.max(prev.bestGameRun, newCurrentRun)
         }));
+    };
 
-        // Check for win condition
-        if (newScore >= targetGoal) {
-            const stats = calculateStats(currentPlayerState);
-            setWinner(playerNum);
-            setWinnerStats(stats);
-            setShowWinModal(true);
-            setIsTimerRunning(false);
-            playWinSound();
+    // Update calculatePlayerStats function to properly map frontend stats
+    const calculatePlayerStats = (player, playerNum) => {
+        let totalPoints = player.score || 0;
+        let totalSafes = player.safes || 0;
+        let totalMisses = player.misses || 0;
+        let totalFouls = player.fouls || 0;
+        let totalScratches = player.scratches || 0;
+        let totalIntentionalFouls = player.intentionalFouls || 0;
+        let totalBreakingFouls = player.breakingFouls || 0;
+        let bestRunInGame = player.bestRun || 0;
+        let currentRunCount = 0;
+        let maxRunInGame = 0;
+        let breakAndRuns = 0;
+        let defensiveShots = player.defensiveShots || 0;
+        let safetyPlays = player.safetyPlays || 0;
+        let playerInnings = 0;
+        let wasBreakShot = false;
+
+        // Count additional stats from turn history
+        turnHistory.forEach(turn => {
+            if (turn.playerNum === playerNum) {
+                playerInnings++;
+                wasBreakShot = turn.isBreak || false;
+
+                switch (turn.action) {
+                    case 'Points':
+                    case 'Finish Rack':
+                        currentRunCount += turn.points || 0;
+                        maxRunInGame = Math.max(maxRunInGame, currentRunCount);
+                        if (wasBreakShot && currentRunCount >= 14) {
+                            breakAndRuns++;
+                        }
+                        break;
+                    case 'Breaking Foul':
+                    case 'Breaking Foul - Rebreak':
+                        totalBreakingFouls++;
+                        totalFouls++;
+                        currentRunCount = 0;
+                        break;
+                    case 'Safe':
+                        totalSafes++;
+                        safetyPlays++;
+                        defensiveShots++;
+                        currentRunCount = 0;
+                        break;
+                    case 'Miss':
+                        totalMisses++;
+                        currentRunCount = 0;
+                        break;
+                    case 'Scratch':
+                    case 'Break Scratch':
+                        totalScratches++;
+                        totalFouls++;
+                        currentRunCount = 0;
+                        break;
+                    case 'Foul':
+                        totalFouls++;
+                        currentRunCount = 0;
+                        break;
+                    case 'Intentional Foul':
+                        totalFouls++;
+                        totalIntentionalFouls++;
+                        currentRunCount = 0;
+                        break;
+                    default:
+                        if (!['New Rack', 'Undo', 'Handicap Applied'].includes(turn.action)) {
+                            currentRunCount = 0;
+                        }
+                }
+                wasBreakShot = false;
+            }
+        });
+
+        // Calculate final stats
+        const stats = {
+            totalPoints: totalPoints,
+            totalInnings: playerInnings,
+            breakAndRuns: breakAndRuns,
+            safetyPlays: safetyPlays,
+            safes: totalSafes,
+            defensiveShots: defensiveShots,
+            scratches: totalScratches,
+            avgPointsPerInning: playerInnings > 0 ? (totalPoints / playerInnings) : 0,
+            fouls: totalFouls,
+            intentionalFouls: totalIntentionalFouls,
+            breakingFouls: totalBreakingFouls,
+            misses: totalMisses,
+            bestRun: Math.max(maxRunInGame, player.bestRun || 0),
+            currentRun: currentRunCount,
+            runHistory: []
+        };
+
+        // Ensure all stats are numbers and non-negative
+        Object.keys(stats).forEach(key => {
+            if (key === 'runHistory') return;
+            if (key === 'avgPointsPerInning') {
+                stats[key] = Math.max(0, parseFloat(stats[key]) || 0);
+            } else {
+                stats[key] = Math.max(0, parseInt(stats[key]) || 0);
+            }
+        });
+
+        return stats;
+    };
+
+    // Update saveMatchToDatabase function
+    const saveMatchToDatabase = async (gameResult, duration) => {
+        try {
+            const userId = localStorage.getItem('userId');
+            const token = localStorage.getItem('token');
+            if (!userId || !token) {
+                throw new Error('Authentication information not found');
+            }
+
+            // Calculate final stats for both players
+            const player1Stats = {
+                totalPoints: player1.score || 0,
+                totalInnings: currentInning,
+                breakAndRuns: player1.breakAndRuns || 0,
+                safetyPlays: player1.safetyPlays || 0,
+                safes: player1.safes || 0,
+                defensiveShots: player1.defensiveShots || 0,
+                scratches: player1.scratches || 0,
+                avgPointsPerInning: player1.score / currentInning || 0,
+                fouls: player1.fouls || 0,
+                intentionalFouls: player1.intentionalFouls || 0,
+                breakingFouls: player1.breakingFouls || 0,
+                misses: player1.misses || 0,
+                bestRun: player1.bestRun || 0,
+                currentRun: player1.currentRun || 0,
+                runHistory: []
+            };
+
+            const player2Stats = {
+                totalPoints: player2.score || 0,
+                totalInnings: currentInning,
+                breakAndRuns: player2.breakAndRuns || 0,
+                safetyPlays: player2.safetyPlays || 0,
+                safes: player2.safes || 0,
+                defensiveShots: player2.defensiveShots || 0,
+                scratches: player2.scratches || 0,
+                avgPointsPerInning: player2.score / currentInning || 0,
+                fouls: player2.fouls || 0,
+                intentionalFouls: player2.intentionalFouls || 0,
+                breakingFouls: player2.breakingFouls || 0,
+                misses: player2.misses || 0,
+                bestRun: player2.bestRun || 0,
+                currentRun: player2.currentRun || 0,
+                runHistory: []
+            };
+
+            // Calculate total fouls for each player
+            const player1TotalFouls = (player1.fouls || 0) + (player1.intentionalFouls || 0) + (player1.breakingFouls || 0);
+            const player2TotalFouls = (player2.fouls || 0) + (player2.intentionalFouls || 0) + (player2.breakingFouls || 0);
+
+            // Update stats with total fouls
+            player1Stats.fouls = player1TotalFouls;
+            player2Stats.fouls = player2TotalFouls;
+
+            const matchData = {
+                player1: {
+                    name: player1.name,
+                    handicap: parseInt(player1.handicap) || 0
+                },
+                player2: {
+                    name: player2.name,
+                    handicap: parseInt(player2.handicap) || 0
+                },
+                player1Score: parseInt(gameResult.finalScore1),
+                player2Score: parseInt(gameResult.finalScore2),
+                winner: {
+                    name: gameResult.winner.name,
+                    handicap: gameResult.winner.handicap || 0
+                },
+                gameType: "Straight Pool",
+                duration: parseInt(duration) || 0,
+                userId: userId,
+                player1Stats: player1Stats,
+                player2Stats: player2Stats,
+                innings: turnHistory.reduce((acc, turn) => {
+                    const inningIndex = turn.inning - 1;
+                    if (!acc[inningIndex]) {
+                        acc[inningIndex] = {
+                            inningNumber: turn.inning,
+                            turns: []
+                        };
+                    }
+                    acc[inningIndex].turns.push({
+                        player: turn.playerNum === 1 ? player1.name : player2.name,
+                        playerName: turn.playerNum === 1 ? player1.name : player2.name,
+                        playerNum: turn.playerNum,
+                        action: turn.action,
+                        points: parseInt(turn.points) || 0,
+                        timestamp: new Date(turn.timestamp || Date.now()),
+                        score: parseInt(turn.score) || 0,
+                        ballsPocketed: [],
+                        isBreak: turn.action === 'Break',
+                        isScratch: ['Scratch', 'Break Scratch'].includes(turn.action),
+                        isSafetyPlay: turn.action === 'Safe',
+                        isDefensiveShot: turn.action === 'Safe',
+                        isFoul: ['Foul', 'Breaking Foul', 'Breaking Foul - Rebreak', 'Intentional Foul'].includes(turn.action),
+                        isBreakingFoul: ['Breaking Foul', 'Breaking Foul - Rebreak'].includes(turn.action),
+                        isIntentionalFoul: turn.action === 'Intentional Foul',
+                        isMiss: turn.action === 'Miss',
+                        inning: turn.inning
+                    });
+                    return acc;
+                }, []),
+                matchDate: new Date(),
+                targetScore: targetGoal,
+                turnHistory: turnHistory
+            };
+
+            console.log('Saving complete match data:', matchData);
+            const response = await axios.post(`${API_BASE_URL}/matches`, matchData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log('Match saved successfully:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error saving match:', error);
+            if (error.response?.status === 401) {
+                console.error('Authentication error: Please log in again');
+            }
+            throw error;
         }
     };
 
@@ -1085,49 +1499,51 @@ export default function PoolScoringComponent() {
                             <div className="grid grid-cols-4 gap-2">
                                 <StatBox 
                                     label="Safe"
-                                    value={player1.safes}
+                                    value={player1.safes || 0}
                                     onClick={() => gameStarted && handleSafe(1)}
                                     color={isDarkMode ? 'text-blue-400' : 'text-blue-600'}
                                 />
                                 <StatBox 
                                     label="Miss"
-                                    value={player1.misses}
+                                    value={player1.misses || 0}
                                     onClick={() => gameStarted && handleMiss(1)}
                                     color={isDarkMode ? 'text-blue-400' : 'text-blue-600'}
                                 />
                                 <StatBox 
                                     label="Run"
-                                    value={player1.currentRun}
+                                    value={player1.currentRun || 0}
                                     color={isDarkMode ? 'text-blue-400' : 'text-blue-600'}
                                 />
                                 <StatBox 
-                                    label="High"
-                                    value={player1.high}
-                                    color={isDarkMode ? 'text-blue-400' : 'text-blue-600'}
+                                    label="Break F"
+                                    value={player1.breakingFouls || 0}
+                                    onClick={() => gameStarted && handleBreakingFoul(1)}
+                                    color="text-red-400"
+                                    isSmallText={true}
                                 />
                             </div>
                             {/* Bottom row - 4 metrics */}
                             <div className="grid grid-cols-4 gap-2">
                                 <StatBox 
                                     label="Best"
-                                    value={player1.bestGameRun}
+                                    value={player1.bestRun || 0}
                                     color={isDarkMode ? 'text-blue-400' : 'text-blue-600'}
                                 />
                                 <StatBox 
                                     label="Scratch"
-                                    value={player1.scratches}
+                                    value={player1.scratches || 0}
                                     onClick={() => gameStarted && handleScratch(1)}
                                     color="text-yellow-400"
                                 />
                                 <StatBox 
                                     label="Foul"
-                                    value={player1.fouls}
+                                    value={player1.fouls || 0}
                                     onClick={() => gameStarted && handleFoul(1)}
                                     color="text-red-400"
                                 />
                                 <StatBox 
                                     label="Int Foul"
-                                    value={player1.intentionalFouls}
+                                    value={player1.intentionalFouls || 0}
                                     onClick={() => gameStarted && handleIntentionalFoul(1)}
                                     color="text-red-600"
                                 />
@@ -1183,49 +1599,51 @@ export default function PoolScoringComponent() {
                             <div className="grid grid-cols-4 gap-2">
                                 <StatBox 
                                     label="Safe"
-                                    value={player2.safes}
+                                    value={player2.safes || 0}
                                     onClick={() => gameStarted && handleSafe(2)}
                                     color={isDarkMode ? 'text-orange-400' : 'text-orange-600'}
                                 />
                                 <StatBox 
                                     label="Miss"
-                                    value={player2.misses}
+                                    value={player2.misses || 0}
                                     onClick={() => gameStarted && handleMiss(2)}
                                     color={isDarkMode ? 'text-orange-400' : 'text-orange-600'}
                                 />
                                 <StatBox 
                                     label="Run"
-                                    value={player2.currentRun}
+                                    value={player2.currentRun || 0}
                                     color={isDarkMode ? 'text-orange-400' : 'text-orange-600'}
                                 />
                                 <StatBox 
-                                    label="High"
-                                    value={player2.high}
-                                    color={isDarkMode ? 'text-orange-400' : 'text-orange-600'}
+                                    label="Break F"
+                                    value={player2.breakingFouls || 0}
+                                    onClick={() => gameStarted && handleBreakingFoul(2)}
+                                    color="text-red-400"
+                                    isSmallText={true}
                                 />
                             </div>
                             {/* Bottom row - 4 metrics */}
                             <div className="grid grid-cols-4 gap-2">
                                 <StatBox 
                                     label="Best"
-                                    value={player2.bestGameRun}
+                                    value={player2.bestRun || 0}
                                     color={isDarkMode ? 'text-orange-400' : 'text-orange-600'}
                                 />
                                 <StatBox 
                                     label="Scratch"
-                                    value={player2.scratches}
+                                    value={player2.scratches || 0}
                                     onClick={() => gameStarted && handleScratch(2)}
                                     color="text-yellow-400"
                                 />
                                 <StatBox 
                                     label="Foul"
-                                    value={player2.fouls}
+                                    value={player2.fouls || 0}
                                     onClick={() => gameStarted && handleFoul(2)}
                                     color="text-red-400"
                                 />
                                 <StatBox 
                                     label="Int Foul"
-                                    value={player2.intentionalFouls}
+                                    value={player2.intentionalFouls || 0}
                                     onClick={() => gameStarted && handleIntentionalFoul(2)}
                                     color="text-red-600"
                                 />
@@ -1295,7 +1713,11 @@ export default function PoolScoringComponent() {
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-4">
-                                            <span>
+                                            <span className={`${
+                                                turn.action === 'Miss' ? 'text-red-400' :
+                                                turn.points > 0 ? 'text-green-400' :
+                                                turn.points < 0 ? 'text-red-400' : ''
+                                            }`}>
                                                 {turn.action}
                                                 {turn.points !== undefined && turn.points !== 0 && (
                                                     <span className={turn.points > 0 ? 'text-green-400' : 'text-red-400'}>
@@ -1386,9 +1808,9 @@ export default function PoolScoringComponent() {
                                                 <div className="space-y-4">
                                                     {/* Fouls Section */}
                                                     <div>
-                                                        <h4 className="font-medium mb-2">Fouls ({stats.totalFouls})</h4>
+                                                        <h4 className="font-medium mb-2">Fouls ({stats.totalFouls || 0})</h4>
                                                         <div className="space-y-1">
-                                                            {stats.foulDetails.map((foul, idx) => (
+                                                            {(stats.foulDetails || []).map((foul, idx) => (
                                                                 <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
                                                                     <span>Inning {foul.inning}</span>
                                                                     <span className="text-red-400">{foul.type} ({foul.points})</span>
@@ -1399,9 +1821,9 @@ export default function PoolScoringComponent() {
 
                                                     {/* Safes Section */}
                                                     <div>
-                                                        <h4 className="font-medium mb-2">Safes ({stats.totalSafes})</h4>
+                                                        <h4 className="font-medium mb-2">Safes ({stats.totalSafes || 0})</h4>
                                                         <div className="space-y-1">
-                                                            {stats.safeDetails.map((safe, idx) => (
+                                                            {(stats.safeDetails || []).map((safe, idx) => (
                                                                 <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
                                                                     <span>Inning {safe.inning}</span>
                                                                 </div>
@@ -1411,9 +1833,9 @@ export default function PoolScoringComponent() {
 
                                                     {/* Misses Section */}
                                                     <div>
-                                                        <h4 className="font-medium mb-2">Misses ({stats.totalMisses})</h4>
+                                                        <h4 className="font-medium mb-2">Misses ({stats.totalMisses || 0})</h4>
                                                         <div className="space-y-1">
-                                                            {stats.missDetails.map((miss, idx) => (
+                                                            {(stats.missDetails || []).map((miss, idx) => (
                                                                 <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
                                                                     <span>Inning {miss.inning}</span>
                                                                 </div>
@@ -1425,7 +1847,7 @@ export default function PoolScoringComponent() {
                                                     <div>
                                                         <h4 className="font-medium mb-2">Scoring Runs</h4>
                                                         <div className="space-y-1">
-                                                            {stats.runDetails.map((run, idx) => (
+                                                            {(stats.runDetails || []).map((run, idx) => (
                                                                 <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
                                                                     <span>Inning {run.inning}</span>
                                                                     <span className="text-green-400">+{run.points}</span>
