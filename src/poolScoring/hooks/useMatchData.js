@@ -33,6 +33,7 @@ export const useMatchData = () => {
     const saveMatchToDatabase = async (player1State, player2State, targetScore, winner) => {
         const token = localStorage.getItem('token');
         if (!token) {
+            console.error('No token found in localStorage');
             throw new Error('Authentication information not found');
         }
 
@@ -82,27 +83,34 @@ export const useMatchData = () => {
         };
 
         try {
+            console.log('Saving match with token:', token);
             const response = await fetch(`${API_BASE_URL}/matches`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify(matchData),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error('Error response:', errorData);
-                throw new Error('Failed to save match data');
+                console.error('Server error response:', errorData);
+                throw new Error(errorData.message || 'Failed to save match data');
             }
 
             const savedMatch = await response.json();
-            console.log('Saved match data:', savedMatch);
+            console.log('Match saved successfully:', savedMatch);
             setMatchId(savedMatch._id);
             return savedMatch;
         } catch (error) {
             console.error('Error saving match:', error);
+            if (error.message.includes('Authentication')) {
+                // If it's an auth error, try to get a new token
+                window.location.href = '/login';
+            }
             throw error;
         }
     };

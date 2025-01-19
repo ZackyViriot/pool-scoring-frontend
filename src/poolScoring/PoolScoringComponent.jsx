@@ -5,6 +5,7 @@ import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const getApiUrl = () => {
   if (typeof window !== 'undefined') {
@@ -19,14 +20,27 @@ const API_BASE_URL = getApiUrl();
 
 export default function PoolScoringComponent() {
     const navigate = useNavigate();
+    const { user } = useAuth();
 
-    // Check authentication on mount
+    // Check authentication on mount and periodically
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            navigate('/login');
-        }
-    }, [navigate]);
+        const checkAuth = () => {
+            const token = localStorage.getItem('token');
+            if (!token || !user) {
+                console.log('No authentication found, redirecting to login');
+                navigate('/login');
+                return false;
+            }
+            return true;
+        };
+
+        // Initial check
+        if (!checkAuth()) return;
+
+        // Periodic check every minute
+        const interval = setInterval(checkAuth, 60000);
+        return () => clearInterval(interval);
+    }, [navigate, user]);
 
     // Add menu state
     const [showMenu, setShowMenu] = useState(false);
