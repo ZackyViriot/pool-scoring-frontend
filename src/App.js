@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.tsx';
 import { StripeProvider } from './context/StripeContext';
-import PoolScoringComponent from './poolScoring/PoolScoringComponent';
+import PoolScoringComponent from './poolScoring/PoolScoringComponent.jsx';
 import LandingPage from './pages/LandingPage';
 import History from './pages/History.tsx';
 

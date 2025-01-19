@@ -8,12 +8,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext.tsx";
 
 const getApiUrl = () => {
-  if (typeof window !== 'undefined') {
-    return window.location.hostname === 'localhost' 
-      ? 'http://localhost:8000'
-      : 'https://pool-scoring-backend-production.up.railway.app';
-  }
-  return 'http://localhost:8000';
+    if (typeof window !== 'undefined') {
+        return window.location.hostname === 'localhost' 
+            ? 'http://localhost:8000'
+            : 'https://pool-scoring-backend-production.up.railway.app';
+    }
+    return 'http://localhost:8000';
 };
 
 const API_BASE_URL = getApiUrl();
@@ -21,40 +21,10 @@ const API_BASE_URL = getApiUrl();
 export default function PoolScoringComponent() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [playWinSound] = useSound('/sounds/win.mp3');
 
-    useEffect(() => {
-        if (!user) {
-            navigate('/');
-            return;
-        }
-    }, [user, navigate]);
-
-    if (!user) return null;
-
-    // Check authentication on mount and periodically
-    useEffect(() => {
-        const checkAuth = () => {
-            const token = localStorage.getItem('token');
-            if (!token || !user) {
-                console.log('No authentication found, redirecting to login');
-                navigate('/login');
-                return false;
-            }
-            return true;
-        };
-
-        // Initial check
-        if (!checkAuth()) return;
-
-        // Periodic check every minute
-        const interval = setInterval(checkAuth, 60000);
-        return () => clearInterval(interval);
-    }, [navigate, user]);
-
-    // Add menu state
+    // All state hooks moved to the top level
     const [showMenu, setShowMenu] = useState(false);
-    
-    // Game state
     const [gameStarted, setGameStarted] = useState(() => {
         const saved = localStorage.getItem('poolGame');
         return saved ? JSON.parse(saved).gameStarted : false;
@@ -114,31 +84,20 @@ export default function PoolScoringComponent() {
     });
     const [showBreakFoulModal, setShowBreakFoulModal] = useState(false);
     const [breakFoulPlayer, setBreakFoulPlayer] = useState(null);
-    
-    // Win modal state
     const [showWinModal, setShowWinModal] = useState(false);
     const [winner, setWinner] = useState(null);
     const [winnerStats, setWinnerStats] = useState(null);
     const [showGameStats, setShowGameStats] = useState(false);
-
-    // Theme state
     const [isDarkMode, setIsDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark';
         }
         return true;
     });
-
-    // Window size for confetti
     const [windowSize, setWindowSize] = useState({
         width: typeof window !== 'undefined' ? window.innerWidth : 1200,
         height: typeof window !== 'undefined' ? window.innerHeight : 800,
     });
-
-    // Sound effects
-    const [playWinSound] = useSound('/sounds/win.mp3');
-
-    // Player states
     const [player1, setPlayer1] = useState(() => {
         const saved = localStorage.getItem('poolGame');
         return saved ? JSON.parse(saved).player1 : {
@@ -161,7 +120,6 @@ export default function PoolScoringComponent() {
             breakingFouls: 0
         };
     });
-
     const [player2, setPlayer2] = useState(() => {
         const saved = localStorage.getItem('poolGame');
         return saved ? JSON.parse(saved).player2 : {
@@ -184,14 +142,35 @@ export default function PoolScoringComponent() {
             breakingFouls: 0
         };
     });
-
-    // GameType state
     const [gameType, setGameType] = useState(() => {
         const saved = localStorage.getItem('poolGame');
         return saved ? JSON.parse(saved).gameType : 'Straight Pool';
     });
 
-    // Theme effect
+    // All useEffect hooks moved here
+    useEffect(() => {
+        if (!user) {
+            navigate('/');
+        }
+    }, [user, navigate]);
+
+    useEffect(() => {
+        const checkAuth = () => {
+            const token = localStorage.getItem('token');
+            if (!token || !user) {
+                console.log('No authentication found, redirecting to login');
+                navigate('/login');
+                return false;
+            }
+            return true;
+        };
+
+        if (!checkAuth()) return;
+
+        const interval = setInterval(checkAuth, 60000);
+        return () => clearInterval(interval);
+    }, [navigate, user]);
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
@@ -203,7 +182,6 @@ export default function PoolScoringComponent() {
         }
     }, [isDarkMode]);
 
-    // Window size effect
     useEffect(() => {
         const handleResize = () => {
             setWindowSize({
@@ -218,7 +196,6 @@ export default function PoolScoringComponent() {
         }
     }, []);
 
-    // Game timer effect
     useEffect(() => {
         let interval;
         if (isTimerRunning) {
@@ -228,6 +205,26 @@ export default function PoolScoringComponent() {
         }
         return () => clearInterval(interval);
     }, [isTimerRunning]);
+
+    useEffect(() => {
+        if (gameStarted) {
+            saveGameState();
+        }
+    }, [
+        gameStarted,
+        objectBallsOnTable,
+        activePlayer,
+        currentInning,
+        player1,
+        player2,
+        turnHistory,
+        player1FoulHistory,
+        player2FoulHistory
+    ]);
+
+    // Rest of your component code...
+
+    if (!user) return null;
 
     const formatTime = (seconds) => {
         const hours = Math.floor(seconds / 3600);
@@ -325,24 +322,6 @@ export default function PoolScoringComponent() {
         };
         localStorage.setItem('poolGame', JSON.stringify(gameState));
     };
-
-    // Add effect to save game state when important values change
-    useEffect(() => {
-        if (gameStarted) {
-            saveGameState();
-        }
-    }, [
-        gameStarted,
-        objectBallsOnTable,
-        activePlayer,
-        currentInning,
-        player1,
-        player2,
-        turnHistory,
-        player1FoulHistory,
-        player2FoulHistory,
-        saveGameState
-    ]);
 
     // Clear localStorage when game ends
     const clearGameState = () => {
