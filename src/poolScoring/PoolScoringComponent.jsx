@@ -1228,11 +1228,11 @@ export default function PoolScoringComponent() {
 
             const matchData = {
                 player1: {
-                    name: player1.name,
+                    name: player1.name || "Player 1",
                     handicap: parseInt(player1.handicap) || 0
                 },
                 player2: {
-                    name: player2.name,
+                    name: player2.name || "Player 2",
                     handicap: parseInt(player2.handicap) || 0
                 },
                 player1Score: parseInt(gameResult.finalScore1),
@@ -1246,6 +1246,7 @@ export default function PoolScoringComponent() {
                 userId: user.id,
                 player1Stats: player1Stats,
                 player2Stats: player2Stats,
+                matchDate: new Date(),
                 innings: turnHistory.map((turn) => {
                     const isHandicap = turn.action === 'Handicap Applied';
                     let actionText = '';
@@ -1283,15 +1284,12 @@ export default function PoolScoringComponent() {
                         actionColor = 'text-gray-400';
                     }
 
-                    // Ensure timestamp is a Date object
-                    const timestamp = turn.timestamp instanceof Date ? turn.timestamp : new Date(turn.timestamp);
-
                     return {
                         playerNumber: turn.playerNum,
                         playerName: turn.playerNum === 1 ? player1.name : player2.name,
                         ballsPocketed: turn.points > 0 && !isHandicap ? turn.points : 0,
                         action: turn.action,
-                        timestamp: timestamp,
+                        timestamp: new Date(turn.timestamp),
                         score: parseInt(turn.score) || 0,
                         inning: turn.inning,
                         points: parseInt(turn.points) || 0,
@@ -1304,13 +1302,11 @@ export default function PoolScoringComponent() {
                         isBreakingFoul: turn.action === 'Breaking Foul' || turn.action === 'Breaking Foul - Rebreak',
                         isIntentionalFoul: turn.action === 'Intentional Foul',
                         isMiss: turn.action === 'Miss',
-                        isHandicap: isHandicap,
                         actionText: actionText,
                         actionColor: actionColor
                     };
                 }),
-                targetScore: targetGoal,
-                turnHistory: turnHistory
+                targetScore: targetGoal
             };
 
             console.log('Saving complete match data:', matchData);
