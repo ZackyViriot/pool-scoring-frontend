@@ -72,7 +72,7 @@ const getApiUrl = () => {
   if (typeof window !== 'undefined') {
     return window.location.hostname === 'localhost' 
       ? 'http://localhost:8000'
-      : 'https://pool-scoring-frontend.vercel.app';
+      : 'https://pool-scoring-backend.vercel.app';
   }
   return 'http://localhost:8000';
 };
