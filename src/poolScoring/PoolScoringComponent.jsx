@@ -1327,6 +1327,9 @@ export default function PoolScoringComponent() {
             return response.data;
         } catch (error) {
             console.error('Error saving match:', error);
+            console.error('Error response data:', error.response?.data);
+            console.error('Error response status:', error.response?.status);
+            console.error('Error response headers:', error.response?.headers);
             if (error.response?.status === 401 || error.message.includes('Authentication')) {
                 console.error('Authentication error: Please log in again');
                 navigate('/login');
