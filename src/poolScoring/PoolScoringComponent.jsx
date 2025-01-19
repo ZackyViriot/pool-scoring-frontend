@@ -6,7 +6,16 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = 'http://localhost:8000';
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.hostname === 'localhost' 
+      ? 'http://localhost:8000'
+      : 'https://pool-scoring-backend-production.up.railway.app';
+  }
+  return 'http://localhost:8000';
+};
+
+const API_BASE_URL = getApiUrl();
 
 export default function PoolScoringComponent() {
     const navigate = useNavigate();

@@ -1,5 +1,16 @@
 import { useState } from 'react';
 
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.hostname === 'localhost' 
+      ? 'http://localhost:8000'
+      : 'https://pool-scoring-backend-production.up.railway.app';
+  }
+  return 'http://localhost:8000';
+};
+
+const API_BASE_URL = getApiUrl();
+
 export const useMatchData = () => {
     const [innings, setInnings] = useState([]);
     const [matchDate, setMatchDate] = useState(new Date());
@@ -20,6 +31,11 @@ export const useMatchData = () => {
     };
 
     const saveMatchToDatabase = async (player1State, player2State, targetScore, winner) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Authentication information not found');
+        }
+
         const createPlayerStats = (playerState) => ({
             score: playerState.score || 0,
             totalPoints: playerState.totalPoints || 0,
@@ -66,10 +82,11 @@ export const useMatchData = () => {
         };
 
         try {
-            const response = await fetch('/api/matches', {
+            const response = await fetch(`${API_BASE_URL}/matches`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(matchData),
             });
