@@ -22,6 +22,15 @@ export default function PoolScoringComponent() {
     const navigate = useNavigate();
     const { user } = useAuth();
 
+    useEffect(() => {
+        if (!user) {
+            navigate('/');
+            return;
+        }
+    }, [user, navigate]);
+
+    if (!user) return null;
+
     // Check authentication on mount and periodically
     useEffect(() => {
         const checkAuth = () => {
