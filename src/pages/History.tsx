@@ -106,29 +106,13 @@ export default function History() {
     return true;
   });
 
-  useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_BASE_URL}/matches`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        // Ensure response.data is an array
-        setMatches(Array.isArray(response.data) ? response.data : []);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch matches');
-        setLoading(false);
-      }
-    };
-
-    fetchMatches();
-  }, []);
-
   const handleMatchClick = (match: Match) => {
     setSelectedMatch(match);
+  };
+
+  const handleMatchDelete = () => {
+    // Refresh the matches list after deletion
+    fetchMatches();
   };
 
   const handleCloseModal = () => {
@@ -140,6 +124,28 @@ export default function History() {
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
+
+  // Move fetchMatches function outside useEffect so it can be reused
+  const fetchMatches = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/matches`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      // Ensure response.data is an array
+      setMatches(Array.isArray(response.data) ? response.data : []);
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to fetch matches');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMatches();
+  }, []);
 
   // Theme effect
   useEffect(() => {
@@ -208,6 +214,7 @@ export default function History() {
                     match={match}
                     isDarkMode={isDarkMode}
                     onClick={handleMatchClick}
+                    onDelete={handleMatchDelete}
                   />
                 </Grid>
               ))}

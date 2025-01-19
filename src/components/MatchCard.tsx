@@ -5,8 +5,15 @@ import {
   CardContent,
   Typography,
   Dialog,
+  IconButton,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import { Match } from '../types/match';
+import CloseIcon from '@mui/icons-material/Close';
+import axios from 'axios';
 
 interface Player {
   name: string;
@@ -50,6 +57,7 @@ interface MatchCardProps {
   match: Match;
   isDarkMode: boolean;
   onClick: (match: Match) => void;
+  onDelete?: () => void;
 }
 
 const formatDuration = (seconds: number): string => {
@@ -83,8 +91,47 @@ const formatTimeOnly = (dateString: string | Date): string => {
   }
 };
 
-export const MatchCard: React.FC<MatchCardProps> = ({ match, isDarkMode, onClick }) => {
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.hostname === 'localhost' 
+      ? 'http://localhost:8000'
+      : 'https://pool-scoring-backend-production.up.railway.app';
+  }
+  return 'http://localhost:8000';
+};
+
+export const MatchCard: React.FC<MatchCardProps> = ({ match, isDarkMode, onClick, onDelete }) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click event
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${getApiUrl()}/matches/${match._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      setShowDeleteConfirm(false);
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error) {
+      console.error('Error deleting match:', error);
+      alert('Failed to delete match');
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+
+  const handleCancelDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(false);
+  };
 
   return (
     <>
@@ -106,14 +153,30 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, isDarkMode, onClick
         <CardContent>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <Typography variant="h6" className={isDarkMode ? 'text-white' : 'text-gray-800'}>
-                {match.gameType || 'Straight Pool'}
-              </Typography>
-              <div className={`px-3 py-1 rounded-full text-xs ${
-                isDarkMode ? 'bg-[#2a2f3e] text-gray-300' : 'bg-gray-200 text-gray-700'
-              }`}>
-                {formatDuration(match.duration)}
+              <div className="flex items-center gap-2">
+                <Typography variant="h6" className={isDarkMode ? 'text-white' : 'text-gray-800'}>
+                  {match.gameType || 'Straight Pool'}
+                </Typography>
+                <div className={`px-3 py-1 rounded-full text-xs ${
+                  isDarkMode ? 'bg-[#2a2f3e] text-gray-300' : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {formatDuration(match.duration)}
+                </div>
               </div>
+              <IconButton 
+                size="small" 
+                onClick={handleDeleteClick}
+                className="text-red-500 hover:text-red-600"
+                sx={{ 
+                  padding: '4px',
+                  color: '#ef4444',
+                  '&:hover': {
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)'
+                  }
+                }}
+              >
+                <CloseIcon sx={{ fontSize: 18 }} />
+              </IconButton>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -368,6 +431,30 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, isDarkMode, onClick
               </tbody>
             </table>
           </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={handleCancelDelete}
+        onClick={handleCancelDelete}
+        className={isDarkMode ? 'dark' : ''}
+      >
+        <div className={isDarkMode ? 'bg-gray-900 text-white' : 'bg-white'}>
+          <DialogTitle>Delete Match</DialogTitle>
+          <DialogContent>
+            <Typography>
+              Are you sure you want to delete this match between {match.player1.name} and {match.player2.name}?
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCancelDelete} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleDelete} color="error" variant="contained">
+              Delete
+            </Button>
+          </DialogActions>
         </div>
       </Dialog>
     </>
