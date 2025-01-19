@@ -1736,9 +1736,20 @@ export default function PoolScoringComponent() {
 
                             <div className="overflow-y-auto max-h-[60vh] pr-2 space-y-2">
                                 {turnHistory.map((turn, index) => {
-                                    // Ensure timestamp is a Date object for formatting
-                                    const timestamp = turn.timestamp instanceof Date ? turn.timestamp : new Date(turn.timestamp);
-                                    const timeString = format(timestamp, 'h:mm a');
+                                    let timeString;
+                                    try {
+                                        // Ensure timestamp is a valid date
+                                        const timestamp = turn.timestamp ? new Date(turn.timestamp) : new Date();
+                                        if (isNaN(timestamp.getTime())) {
+                                            // If invalid date, use current time
+                                            timeString = format(new Date(), 'h:mm a');
+                                        } else {
+                                            timeString = format(timestamp, 'h:mm a');
+                                        }
+                                    } catch (error) {
+                                        // Fallback to current time if any error occurs
+                                        timeString = format(new Date(), 'h:mm a');
+                                    }
                                     
                                     return (
                                         <div key={index} 
