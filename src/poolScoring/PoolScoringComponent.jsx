@@ -362,8 +362,9 @@ export default function PoolScoringComponent() {
             playerNum,
             action,
             points,
-            timestamp: new Date(), // Store as Date object
-            score: player.score + (points || 0)
+            timestamp: new Date(),
+            score: player.score + (points || 0),
+            ballsPocketed: action === 'Points' ? points : 0  // Add this line to track balls pocketed
         };
         setTurnHistory(prev => [...prev, turnEntry]);
     };
@@ -453,7 +454,7 @@ export default function PoolScoringComponent() {
         if (amount > 0) {
             setFoulHistory([]);  // Reset foul count on successful shot
             setObjectBallsOnTable(prev => {
-                const newCount = Math.max(0, prev - 1);
+                const newCount = Math.max(0, prev - amount);  // Update this line to subtract the actual amount
                 if (newCount <= 1) {
                     setTimeout(() => setObjectBallsOnTable(15), 500);
                     return 1;
@@ -1232,7 +1233,7 @@ export default function PoolScoringComponent() {
             const processedInnings = turnHistory.map(turn => ({
                 playerNumber: turn.playerNum,
                 playerName: turn.playerName,
-                ballsPocketed: 0,
+                ballsPocketed: turn.action === 'Points' || turn.action === 'Finish Rack' ? turn.points : 0,
                 action: turn.action,
                 timestamp: turn.timestamp,
                 score: turn.score,
@@ -1265,14 +1266,14 @@ export default function PoolScoringComponent() {
                     name: gameResult.winner.name,
                     handicap: gameResult.winner.handicap || 0
                 },
-                gameType: gameType || "8-Ball", // Add gameType if not already set
+                gameType: gameType || "Straight Pool",
                 duration: duration || 0,
                 player1Stats,
                 player2Stats,
                 innings: processedInnings,
                 matchDate: new Date(),
                 targetScore: targetGoal || 0,
-                userId: user.id // Get userId from the user object
+                userId: user.id
             };
 
             console.log('Sending match data:', matchData);
