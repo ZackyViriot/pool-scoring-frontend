@@ -5,7 +5,7 @@ import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.tsx';
 
 const getApiUrl = () => {
   if (typeof window !== 'undefined') {
