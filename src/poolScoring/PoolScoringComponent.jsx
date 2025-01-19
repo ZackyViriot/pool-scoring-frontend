@@ -1203,7 +1203,10 @@ export default function PoolScoringComponent() {
         try {
             const userId = localStorage.getItem('userId');
             const token = localStorage.getItem('token');
+            
             if (!userId || !token) {
+                console.error('No authentication found, redirecting to login');
+                navigate('/login');
                 throw new Error('Authentication information not found');
             }
 
@@ -1327,15 +1330,23 @@ export default function PoolScoringComponent() {
             const response = await axios.post(`${API_BASE_URL}/matches`, matchData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                withCredentials: true
             });
+            
+            if (!response.data) {
+                throw new Error('No response from server');
+            }
+            
             console.log('Match saved successfully:', response.data);
             return response.data;
         } catch (error) {
             console.error('Error saving match:', error);
-            if (error.response?.status === 401) {
+            if (error.response?.status === 401 || error.message.includes('Authentication')) {
                 console.error('Authentication error: Please log in again');
+                navigate('/login');
             }
             throw error;
         }
