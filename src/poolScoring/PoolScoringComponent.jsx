@@ -19,6 +19,15 @@ const API_BASE_URL = getApiUrl();
 
 export default function PoolScoringComponent() {
     const navigate = useNavigate();
+
+    // Check authentication on mount
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+        }
+    }, [navigate]);
+
     // Add menu state
     const [showMenu, setShowMenu] = useState(false);
     
