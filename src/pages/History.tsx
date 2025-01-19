@@ -38,18 +38,33 @@ interface PlayerStats {
   defensiveShots: number;
   scratches: number;
   avgPointsPerInning: number;
+  safes: number;
+  misses: number;
+  bestRun: number;
+  fouls: number;
+  intentionalFouls: number;
+  breakingFouls: number;
+  currentRun: number;
+  runHistory: number[];
 }
 
-interface InningTurn {
-  player: string;
-  pointsScored: number;
-  ballsPocketed: string[];
+interface Turn {
+  playerNumber: number;
+  playerName: string;
+  ballsPocketed: number;
+  action: string;
   timestamp: Date;
-}
-
-interface Inning {
-  inningNumber: number;
-  turns: InningTurn[];
+  score: number;
+  inning: number;
+  points: number;
+  isBreak: boolean;
+  isScratch: boolean;
+  isSafetyPlay: boolean;
+  isDefensiveShot: boolean;
+  isFoul: boolean;
+  isBreakingFoul: boolean;
+  isIntentionalFoul: boolean;
+  isMiss: boolean;
 }
 
 interface Match {
@@ -63,8 +78,9 @@ interface Match {
   duration: number;
   player1Stats: PlayerStats;
   player2Stats: PlayerStats;
-  innings: Inning[];
+  innings: Turn[];
   createdAt: string;
+  matchDate: Date;
 }
 
 const getApiUrl = () => {
@@ -79,8 +95,8 @@ const getApiUrl = () => {
 const API_BASE_URL = getApiUrl();
 
 export default function History() {
-  const [matches, setMatches] = useState<Match[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -99,7 +115,8 @@ export default function History() {
             'Authorization': `Bearer ${token}`
           }
         });
-        setMatches(response.data);
+        // Ensure response.data is an array
+        setMatches(Array.isArray(response.data) ? response.data : []);
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch matches');
@@ -177,15 +194,23 @@ export default function History() {
             ? 'bg-gray-900/80 backdrop-blur-sm border border-gray-700' 
             : 'bg-white/80 backdrop-blur-sm border border-gray-200 shadow-lg'}`}>
           <Grid container spacing={3}>
-            {matches.filter(match => match?.player1 && match?.player2 && match?.winner).map((match) => (
-              <Grid item xs={12} sm={6} lg={4} key={match._id}>
-                <MatchCard 
-                  match={match}
-                  isDarkMode={isDarkMode}
-                  onClick={handleMatchClick}
-                />
-              </Grid>
-            ))}
+            {Array.isArray(matches) && matches
+              .filter((match): match is Match => 
+                match !== null && 
+                match !== undefined && 
+                typeof match === 'object' &&
+                'player1' in match && 
+                'player2' in match && 
+                'winner' in match)
+              .map((match) => (
+                <Grid item xs={12} sm={6} lg={4} key={match._id}>
+                  <MatchCard 
+                    match={match}
+                    isDarkMode={isDarkMode}
+                    onClick={handleMatchClick}
+                  />
+                </Grid>
+              ))}
           </Grid>
         </div>
 
@@ -326,32 +351,30 @@ export default function History() {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {selectedMatch.innings.flatMap(inning =>
-                          inning.turns.map((turn, index) => {
-                            // Check if this turn belongs to Player 1 or Player 2
-                            const isPlayer1 = turn.player === selectedMatch.player1.name;
-                            const playerColor = isPlayer1 ? 'text-blue-400' : 'text-orange-400';
-                            return (
-                              <TableRow 
-                                key={`${inning.inningNumber}-${index}`}
-                                className={`${isDarkMode ? 'hover:bg-black/20' : 'hover:bg-gray-50'}`}
-                              >
-                                <TableCell className="text-inherit">
-                                  {inning.inningNumber}
-                                </TableCell>
-                                <TableCell className={playerColor}>
-                                  {turn.player}
-                                </TableCell>
-                                <TableCell className={playerColor}>
-                                  {turn.pointsScored}
-                                </TableCell>
-                                <TableCell className={playerColor}>
-                                  {format(new Date(turn.timestamp), 'h:mm:ss a')}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                        )}
+                        {selectedMatch.innings.map((turn, index) => {
+                          // Check if this turn belongs to Player 1 or Player 2
+                          const isPlayer1 = turn.playerName === selectedMatch.player1.name;
+                          const playerColor = isPlayer1 ? 'text-blue-400' : 'text-orange-400';
+                          return (
+                            <TableRow 
+                              key={`${turn.inning}-${index}`}
+                              className={`${isDarkMode ? 'hover:bg-black/20' : 'hover:bg-gray-50'}`}
+                            >
+                              <TableCell className="text-inherit">
+                                {turn.inning}
+                              </TableCell>
+                              <TableCell className={playerColor}>
+                                {turn.playerName}
+                              </TableCell>
+                              <TableCell className={playerColor}>
+                                {turn.score}
+                              </TableCell>
+                              <TableCell className={playerColor}>
+                                {format(new Date(turn.timestamp), 'h:mm:ss a')}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </TableContainer>

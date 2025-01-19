@@ -15,10 +15,14 @@ interface Player {
 interface PlayerStats {
   totalPoints: number;
   totalInnings: number;
+  breakAndRuns: number;
+  safetyPlays: number;
+  defensiveShots: number;
+  scratches: number;
+  avgPointsPerInning: number;
   safes: number;
   misses: number;
   bestRun: number;
-  scratches: number;
   fouls: number;
   intentionalFouls: number;
   breakingFouls: number;
@@ -58,6 +62,7 @@ interface Match {
   player2Stats: PlayerStats;
   innings: Turn[];
   matchDate: Date;
+  createdAt: string;
 }
 
 interface MatchCardProps {
