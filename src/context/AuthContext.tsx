@@ -54,9 +54,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await response.json();
       localStorage.setItem('token', data.access_token);
       const userData: User = {
-        id: data.id,
-        name: data.name,
-        email: data.email
+        id: data.user.id || data.user._id,
+        name: data.user.name,
+        email: data.user.email
       };
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);

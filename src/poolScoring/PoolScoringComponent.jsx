@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Confetti from 'react-confetti';
 import useSound from 'use-sound';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
@@ -1228,6 +1228,28 @@ export default function PoolScoringComponent() {
                 runHistory: player2.runHistory || []
             };
 
+            // Process innings data to match backend schema
+            const processedInnings = turnHistory.map(turn => ({
+                playerNumber: turn.playerNum,
+                playerName: turn.playerName,
+                ballsPocketed: 0,
+                action: turn.action,
+                timestamp: turn.timestamp,
+                score: turn.score,
+                inning: turn.inning,
+                points: turn.points,
+                isBreak: false,
+                isScratch: turn.action.toLowerCase().includes('scratch'),
+                isSafetyPlay: turn.action.toLowerCase().includes('safe'),
+                isDefensiveShot: turn.action.toLowerCase().includes('defensive'),
+                isFoul: turn.action.toLowerCase().includes('foul'),
+                isBreakingFoul: turn.action.toLowerCase().includes('breaking foul'),
+                isIntentionalFoul: turn.action.toLowerCase().includes('intentional foul'),
+                isMiss: turn.action.toLowerCase().includes('miss'),
+                actionText: turn.action,
+                actionColor: '#000000'
+            }));
+
             const matchData = {
                 player1: {
                     name: player1.name,
@@ -1247,11 +1269,13 @@ export default function PoolScoringComponent() {
                 duration: duration || 0,
                 player1Stats,
                 player2Stats,
-                innings: turnHistory || [],
+                innings: processedInnings,
                 matchDate: new Date(),
                 targetScore: targetGoal || 0,
-                userId: user.id
+                userId: user.id // Get userId from the user object
             };
+
+            console.log('Sending match data:', matchData);
 
             const response = await fetch(`${getApiUrl()}/matches`, {
                 method: 'POST',
