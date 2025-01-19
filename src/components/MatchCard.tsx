@@ -6,6 +6,7 @@ import {
   Typography,
   Dialog,
 } from '@mui/material';
+import { Match } from '../types/match';
 
 interface Player {
   name: string;
@@ -15,14 +16,10 @@ interface Player {
 interface PlayerStats {
   totalPoints: number;
   totalInnings: number;
-  breakAndRuns: number;
-  safetyPlays: number;
-  defensiveShots: number;
-  scratches: number;
-  avgPointsPerInning: number;
   safes: number;
   misses: number;
   bestRun: number;
+  scratches: number;
   fouls: number;
   intentionalFouls: number;
   breakingFouls: number;
@@ -47,22 +44,6 @@ interface Turn {
   isBreakingFoul: boolean;
   isIntentionalFoul: boolean;
   isMiss: boolean;
-}
-
-interface Match {
-  _id: string;
-  player1: Player;
-  player2: Player;
-  player1Score: number;
-  player2Score: number;
-  winner: Player;
-  gameType: string;
-  duration: number;
-  player1Stats: PlayerStats;
-  player2Stats: PlayerStats;
-  innings: Turn[];
-  matchDate: Date;
-  createdAt: string;
 }
 
 interface MatchCardProps {

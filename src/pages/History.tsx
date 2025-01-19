@@ -16,6 +16,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import MatchCard from '../components/MatchCard.tsx';
+import { Match } from '../types/match';
 
 declare global {
   namespace NodeJS {
@@ -65,22 +66,6 @@ interface Turn {
   isBreakingFoul: boolean;
   isIntentionalFoul: boolean;
   isMiss: boolean;
-}
-
-interface Match {
-  _id: string;
-  player1: Player;
-  player2: Player;
-  player1Score: number;
-  player2Score: number;
-  winner: Player;
-  gameType: string;
-  duration: number;
-  player1Stats: PlayerStats;
-  player2Stats: PlayerStats;
-  innings: Turn[];
-  createdAt: string;
-  matchDate: Date;
 }
 
 const getApiUrl = () => {
