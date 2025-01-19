@@ -1199,6 +1199,7 @@ export default function PoolScoringComponent() {
 
             // Calculate final stats for both players
             const player1Stats = {
+                score: player1.score || 0,
                 totalPoints: player1.score || 0,
                 totalInnings: currentInning,
                 safes: player1.safes || 0,
@@ -1213,6 +1214,7 @@ export default function PoolScoringComponent() {
             };
 
             const player2Stats = {
+                score: player2.score || 0,
                 totalPoints: player2.score || 0,
                 totalInnings: currentInning,
                 safes: player2.safes || 0,
@@ -1228,112 +1230,49 @@ export default function PoolScoringComponent() {
 
             const matchData = {
                 player1: {
-                    name: player1.name || "Player 1",
-                    handicap: parseInt(player1.handicap) || 0
+                    name: player1.name,
+                    handicap: player1.handicap || 0
                 },
                 player2: {
-                    name: player2.name || "Player 2",
-                    handicap: parseInt(player2.handicap) || 0
+                    name: player2.name,
+                    handicap: player2.handicap || 0
                 },
-                player1Score: parseInt(gameResult.finalScore1),
-                player2Score: parseInt(gameResult.finalScore2),
+                player1Score: gameResult.finalScore1,
+                player2Score: gameResult.finalScore2,
                 winner: {
                     name: gameResult.winner.name,
                     handicap: gameResult.winner.handicap || 0
                 },
-                gameType: "Straight Pool",
-                duration: parseInt(duration) || 0,
-                userId: user.id,
-                player1Stats: player1Stats,
-                player2Stats: player2Stats,
+                gameType: gameType || "8-Ball", // Add gameType if not already set
+                duration: duration || 0,
+                player1Stats,
+                player2Stats,
+                innings: turnHistory || [],
                 matchDate: new Date(),
-                innings: turnHistory.map((turn) => {
-                    const isHandicap = turn.action === 'Handicap Applied';
-                    let actionText = '';
-                    let actionColor = '';
-
-                    if (isHandicap) {
-                        actionText = `Handicap Applied (+${turn.points})`;
-                        actionColor = 'text-purple-500';
-                    } else if (turn.action === 'Points') {
-                        actionText = `Made ${turn.points} ball${turn.points !== 1 ? 's' : ''} (+${turn.points})`;
-                        actionColor = 'text-green-500';
-                    } else if (turn.action === 'Safe') {
-                        actionText = 'Safe';
-                        actionColor = 'text-yellow-500';
-                    } else if (turn.action === 'Miss') {
-                        actionText = 'Miss';
-                        actionColor = 'text-red-500';
-                    } else if (turn.action === 'Scratch') {
-                        actionText = 'Scratch (-1)';
-                        actionColor = 'text-red-500';
-                    } else if (turn.action === 'Break Scratch') {
-                        actionText = 'Break Scratch (-2)';
-                        actionColor = 'text-red-500';
-                    } else if (turn.action === 'Breaking Foul') {
-                        actionText = 'Breaking Foul (-2)';
-                        actionColor = 'text-red-500';
-                    } else if (turn.action === 'Breaking Foul - Rebreak') {
-                        actionText = 'Breaking Foul - Rebreak (-2)';
-                        actionColor = 'text-red-500';
-                    } else if (turn.action === 'Intentional Foul') {
-                        actionText = 'Intentional Foul (-2)';
-                        actionColor = 'text-red-500';
-                    } else {
-                        actionText = turn.action;
-                        actionColor = 'text-gray-400';
-                    }
-
-                    return {
-                        playerNumber: turn.playerNum,
-                        playerName: turn.playerNum === 1 ? player1.name : player2.name,
-                        ballsPocketed: turn.points > 0 && !isHandicap ? turn.points : 0,
-                        action: turn.action,
-                        timestamp: new Date(turn.timestamp),
-                        score: parseInt(turn.score) || 0,
-                        inning: turn.inning,
-                        points: parseInt(turn.points) || 0,
-                        isBreak: turn.action.toLowerCase().includes('break'),
-                        isScratch: turn.action === 'Scratch' || turn.action === 'Break Scratch',
-                        isSafetyPlay: turn.action === 'Safe',
-                        isDefensiveShot: turn.action === 'Safe',
-                        isFoul: turn.action === 'Foul' || turn.action === 'Breaking Foul' || 
-                               turn.action === 'Breaking Foul - Rebreak' || turn.action === 'Intentional Foul',
-                        isBreakingFoul: turn.action === 'Breaking Foul' || turn.action === 'Breaking Foul - Rebreak',
-                        isIntentionalFoul: turn.action === 'Intentional Foul',
-                        isMiss: turn.action === 'Miss',
-                        actionText: actionText,
-                        actionColor: actionColor
-                    };
-                }),
-                targetScore: targetGoal
+                targetScore: targetGoal || 0,
+                userId: user.id
             };
 
-            console.log('Saving complete match data:', matchData);
-            const response = await axios.post(`${API_BASE_URL}/matches`, matchData, {
+            const response = await fetch(`${getApiUrl()}/matches`, {
+                method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Authorization': `Bearer ${token}`
                 },
-                withCredentials: true
+                body: JSON.stringify(matchData)
             });
-            
-            if (!response.data) {
-                throw new Error('No response from server');
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error saving match:', errorData);
+                throw new Error(`Failed to save match: ${errorData.message || 'Unknown error'}`);
             }
-            
-            console.log('Match saved successfully:', response.data);
-            return response.data;
+
+            const savedMatch = await response.json();
+            console.log('Match saved successfully:', savedMatch);
+            return savedMatch;
         } catch (error) {
-            console.error('Error saving match:', error);
-            console.error('Error response data:', error.response?.data);
-            console.error('Error response status:', error.response?.status);
-            console.error('Error response headers:', error.response?.headers);
-            if (error.response?.status === 401 || error.message.includes('Authentication')) {
-                console.error('Authentication error: Please log in again');
-                navigate('/login');
-            }
+            console.error('Error in saveMatchToDatabase:', error);
             throw error;
         }
     };
