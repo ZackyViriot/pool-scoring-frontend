@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext.tsx';
 import { useStripe as useStripeContext } from '../../context/StripeContext';
 import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 

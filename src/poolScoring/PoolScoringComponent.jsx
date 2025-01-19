@@ -3,10 +3,16 @@ import Confetti from 'react-confetti';
 import useSound from 'use-sound';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
 import axios from 'axios';
+import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = 'http://localhost:8000';
 
 export default function PoolScoringComponent() {
+    const navigate = useNavigate();
+    // Add menu state
+    const [showMenu, setShowMenu] = useState(false);
+    
     // Game state
     const [gameStarted, setGameStarted] = useState(() => {
         const saved = localStorage.getItem('poolGame');
@@ -336,7 +342,7 @@ export default function PoolScoringComponent() {
             playerNum,
             action,
             points,
-            timestamp: new Date().toLocaleTimeString(),
+            timestamp: new Date(), // Store as Date object
             score: player.score + (points || 0)
         };
         setTurnHistory(prev => [...prev, turnEntry]);
@@ -696,13 +702,28 @@ export default function PoolScoringComponent() {
             runHistory: []
         }));
 
+        // Record handicap differences in turn history
         if (handicapDifference !== 0) {
-            if (handicapDifference > 0) {
-                addToTurnHistory(2, 'Handicap Applied', handicapDifference);
-            } else if (handicapDifference < 0) {
-                addToTurnHistory(1, 'Handicap Applied', Math.abs(handicapDifference));
-            }
+            const turnEntry = {
+                inning: 1,  // Start with inning 1
+                playerNum: handicapDifference > 0 ? 2 : 1,
+                playerName: handicapDifference > 0 ? player2.name || 'Player 2' : player1.name || 'Player 1',
+                action: 'Handicap Applied',
+                points: Math.abs(handicapDifference),
+                timestamp: new Date(), // Store as Date object
+                score: Math.abs(handicapDifference)
+            };
+            setTurnHistory([turnEntry]);
         }
+
+        // Remove the duplicate handicap recording
+        // if (handicapDifference !== 0) {
+        //     if (handicapDifference > 0) {
+        //         addToTurnHistory(2, 'Handicap Applied', handicapDifference);
+        //     } else if (handicapDifference < 0) {
+        //         addToTurnHistory(1, 'Handicap Applied', Math.abs(handicapDifference));
+        //     }
+        // }
     };
 
     const closeWinModal = () => {
@@ -1158,46 +1179,30 @@ export default function PoolScoringComponent() {
             const player1Stats = {
                 totalPoints: player1.score || 0,
                 totalInnings: currentInning,
-                breakAndRuns: player1.breakAndRuns || 0,
-                safetyPlays: player1.safetyPlays || 0,
                 safes: player1.safes || 0,
-                defensiveShots: player1.defensiveShots || 0,
+                misses: player1.misses || 0,
+                bestRun: player1.bestRun || 0,
                 scratches: player1.scratches || 0,
-                avgPointsPerInning: player1.score / currentInning || 0,
                 fouls: player1.fouls || 0,
                 intentionalFouls: player1.intentionalFouls || 0,
                 breakingFouls: player1.breakingFouls || 0,
-                misses: player1.misses || 0,
-                bestRun: player1.bestRun || 0,
                 currentRun: player1.currentRun || 0,
-                runHistory: []
+                runHistory: player1.runHistory || []
             };
 
             const player2Stats = {
                 totalPoints: player2.score || 0,
                 totalInnings: currentInning,
-                breakAndRuns: player2.breakAndRuns || 0,
-                safetyPlays: player2.safetyPlays || 0,
                 safes: player2.safes || 0,
-                defensiveShots: player2.defensiveShots || 0,
+                misses: player2.misses || 0,
+                bestRun: player2.bestRun || 0,
                 scratches: player2.scratches || 0,
-                avgPointsPerInning: player2.score / currentInning || 0,
                 fouls: player2.fouls || 0,
                 intentionalFouls: player2.intentionalFouls || 0,
                 breakingFouls: player2.breakingFouls || 0,
-                misses: player2.misses || 0,
-                bestRun: player2.bestRun || 0,
                 currentRun: player2.currentRun || 0,
-                runHistory: []
+                runHistory: player2.runHistory || []
             };
-
-            // Calculate total fouls for each player
-            const player1TotalFouls = (player1.fouls || 0) + (player1.intentionalFouls || 0) + (player1.breakingFouls || 0);
-            const player2TotalFouls = (player2.fouls || 0) + (player2.intentionalFouls || 0) + (player2.breakingFouls || 0);
-
-            // Update stats with total fouls
-            player1Stats.fouls = player1TotalFouls;
-            player2Stats.fouls = player2TotalFouls;
 
             const matchData = {
                 player1: {
@@ -1219,36 +1224,69 @@ export default function PoolScoringComponent() {
                 userId: userId,
                 player1Stats: player1Stats,
                 player2Stats: player2Stats,
-                innings: turnHistory.reduce((acc, turn) => {
-                    const inningIndex = turn.inning - 1;
-                    if (!acc[inningIndex]) {
-                        acc[inningIndex] = {
-                            inningNumber: turn.inning,
-                            turns: []
-                        };
+                innings: turnHistory.map((turn) => {
+                    const isHandicap = turn.action === 'Handicap Applied';
+                    let actionText = '';
+                    let actionColor = '';
+
+                    if (isHandicap) {
+                        actionText = `Handicap Applied (+${turn.points})`;
+                        actionColor = 'text-purple-500';
+                    } else if (turn.action === 'Points') {
+                        actionText = `Made ${turn.points} ball${turn.points !== 1 ? 's' : ''} (+${turn.points})`;
+                        actionColor = 'text-green-500';
+                    } else if (turn.action === 'Safe') {
+                        actionText = 'Safe';
+                        actionColor = 'text-yellow-500';
+                    } else if (turn.action === 'Miss') {
+                        actionText = 'Miss';
+                        actionColor = 'text-red-500';
+                    } else if (turn.action === 'Scratch') {
+                        actionText = 'Scratch (-1)';
+                        actionColor = 'text-red-500';
+                    } else if (turn.action === 'Break Scratch') {
+                        actionText = 'Break Scratch (-2)';
+                        actionColor = 'text-red-500';
+                    } else if (turn.action === 'Breaking Foul') {
+                        actionText = 'Breaking Foul (-2)';
+                        actionColor = 'text-red-500';
+                    } else if (turn.action === 'Breaking Foul - Rebreak') {
+                        actionText = 'Breaking Foul - Rebreak (-2)';
+                        actionColor = 'text-red-500';
+                    } else if (turn.action === 'Intentional Foul') {
+                        actionText = 'Intentional Foul (-2)';
+                        actionColor = 'text-red-500';
+                    } else {
+                        actionText = turn.action;
+                        actionColor = 'text-gray-400';
                     }
-                    acc[inningIndex].turns.push({
-                        player: turn.playerNum === 1 ? player1.name : player2.name,
+
+                    // Ensure timestamp is a Date object
+                    const timestamp = turn.timestamp instanceof Date ? turn.timestamp : new Date(turn.timestamp);
+
+                    return {
+                        playerNumber: turn.playerNum,
                         playerName: turn.playerNum === 1 ? player1.name : player2.name,
-                        playerNum: turn.playerNum,
+                        ballsPocketed: turn.points > 0 && !isHandicap ? turn.points : 0,
                         action: turn.action,
-                        points: parseInt(turn.points) || 0,
-                        timestamp: new Date(turn.timestamp || Date.now()),
+                        timestamp: timestamp,
                         score: parseInt(turn.score) || 0,
-                        ballsPocketed: [],
-                        isBreak: turn.action === 'Break',
-                        isScratch: ['Scratch', 'Break Scratch'].includes(turn.action),
+                        inning: turn.inning,
+                        points: parseInt(turn.points) || 0,
+                        isBreak: turn.action.toLowerCase().includes('break'),
+                        isScratch: turn.action === 'Scratch' || turn.action === 'Break Scratch',
                         isSafetyPlay: turn.action === 'Safe',
                         isDefensiveShot: turn.action === 'Safe',
-                        isFoul: ['Foul', 'Breaking Foul', 'Breaking Foul - Rebreak', 'Intentional Foul'].includes(turn.action),
-                        isBreakingFoul: ['Breaking Foul', 'Breaking Foul - Rebreak'].includes(turn.action),
+                        isFoul: turn.action === 'Foul' || turn.action === 'Breaking Foul' || 
+                               turn.action === 'Breaking Foul - Rebreak' || turn.action === 'Intentional Foul',
+                        isBreakingFoul: turn.action === 'Breaking Foul' || turn.action === 'Breaking Foul - Rebreak',
                         isIntentionalFoul: turn.action === 'Intentional Foul',
                         isMiss: turn.action === 'Miss',
-                        inning: turn.inning
-                    });
-                    return acc;
-                }, []),
-                matchDate: new Date(),
+                        isHandicap: isHandicap,
+                        actionText: actionText,
+                        actionColor: actionColor
+                    };
+                }),
                 targetScore: targetGoal,
                 turnHistory: turnHistory
             };
@@ -1271,28 +1309,27 @@ export default function PoolScoringComponent() {
         }
     };
 
+    // Update the formatDate function to handle date strings
+    const formatDate = (dateString) => {
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                return 'Invalid date';
+            }
+            return format(date, 'MMM d, yyyy');
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return 'Invalid date';
+        }
+    };
+
     return (
         <div className={`min-h-screen h-screen overflow-hidden transition-colors duration-200
             ${isDarkMode 
                 ? 'bg-gradient-to-br from-gray-900 to-black text-white' 
                 : 'bg-gradient-to-br from-blue-50 to-white text-gray-900'}`}>
             
-            {/* Theme Toggle */}
-            <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="fixed top-2 right-2 p-1 rounded-full transition-all duration-200
-                    hover:scale-110 transform z-50 shadow-lg
-                    dark:bg-gray-800 bg-white"
-                aria-label="Toggle theme"
-            >
-                {isDarkMode ? (
-                    <SunIcon className="w-4 h-4 text-yellow-400" />
-                ) : (
-                    <MoonIcon className="w-4 h-4 text-gray-700" />
-                )}
-            </button>
-
-            <div className="max-w-7xl mx-auto p-1 h-full flex flex-col">
+            <div className="h-screen flex flex-col px-1">
                 {/* Header Section */}
                 <div className={`rounded-lg p-2 mb-1 transition-colors duration-200
                     ${isDarkMode 
@@ -1327,7 +1364,20 @@ export default function PoolScoringComponent() {
                         </div>
 
                         {/* Game Controls */}
-                        <div className="flex flex-col items-center justify-center gap-1">
+                        <div className="flex items-center justify-center gap-4">
+                            {/* Menu Toggle */}
+                            <button
+                                onClick={() => setShowMenu(!showMenu)}
+                                className={`p-2 rounded-lg transition-all duration-200
+                                    ${isDarkMode 
+                                        ? 'bg-black/30 hover:bg-black/50 border border-white/10' 
+                                        : 'bg-white/80 hover:bg-white border border-gray-200'}`}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+
                             <div className="flex items-center gap-2">
                                 <input
                                     type="number"
@@ -1341,12 +1391,21 @@ export default function PoolScoringComponent() {
                                 />
                                 <div className="text-xs opacity-60">TARGET</div>
                             </div>
-                            
-                            {gameStarted && (
-                                <div className="text-sm font-mono opacity-60">
-                                    {formatTime(gameTime)}
-                                </div>
-                            )}
+
+                            {/* Theme Toggle */}
+                            <button
+                                onClick={() => setIsDarkMode(!isDarkMode)}
+                                className="p-2 rounded-lg transition-all duration-200
+                                    hover:scale-110 transform shadow-lg
+                                    dark:bg-gray-800 bg-white"
+                                aria-label="Toggle theme"
+                            >
+                                {isDarkMode ? (
+                                    <SunIcon className="h-5 w-5 text-yellow-400" />
+                                ) : (
+                                    <MoonIcon className="h-5 w-5 text-gray-700" />
+                                )}
+                            </button>
                         </div>
 
                         {/* Player 2 Info */}
@@ -1392,15 +1451,6 @@ export default function PoolScoringComponent() {
                         
                         {gameStarted && (
                             <>
-                                <button 
-                                    onClick={newRack}
-                                    className="px-3 py-1 rounded-full text-xs
-                                        bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 
-                                        transition-colors duration-200"
-                                >
-                                    New Rack ({objectBallsOnTable})
-                                </button>
-
                                 {objectBallsOnTable > 1 && (
                                     <button
                                         onClick={() => finishRack(activePlayer)}
@@ -1411,15 +1461,6 @@ export default function PoolScoringComponent() {
                                         Finish Rack (+{objectBallsOnTable})
                                     </button>
                                 )}
-
-                                <button 
-                                    onClick={() => handleBreakingFoul(activePlayer)}
-                                    className="px-3 py-1 rounded-full text-xs
-                                        bg-red-500/20 text-red-400 hover:bg-red-500/30 
-                                        transition-colors duration-200"
-                                >
-                                    Breaking Foul
-                                </button>
 
                                 <button 
                                     onClick={switchTurn}
@@ -1694,43 +1735,49 @@ export default function PoolScoringComponent() {
                             </div>
 
                             <div className="overflow-y-auto max-h-[60vh] pr-2 space-y-2">
-                                {turnHistory.map((turn, index) => (
-                                    <div key={index} 
-                                        className={`p-2 rounded-lg flex items-center justify-between
-                                            ${isDarkMode ? 'bg-black/30' : 'bg-gray-100'}
-                                            ${turn.playerNum === 1 
-                                                ? 'border-l-4 border-blue-500' 
-                                                : 'border-l-4 border-orange-500'}`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <span className={`font-medium ${
-                                                turn.playerNum === 1 ? 'text-blue-400' : 'text-orange-400'
-                                            }`}>
-                                                {turn.playerName}
-                                            </span>
-                                            <span className="opacity-75">
-                                                Inning {turn.inning}
-                                            </span>
+                                {turnHistory.map((turn, index) => {
+                                    // Ensure timestamp is a Date object for formatting
+                                    const timestamp = turn.timestamp instanceof Date ? turn.timestamp : new Date(turn.timestamp);
+                                    const timeString = format(timestamp, 'h:mm a');
+                                    
+                                    return (
+                                        <div key={index} 
+                                            className={`p-2 rounded-lg flex items-center justify-between
+                                                ${isDarkMode ? 'bg-black/30' : 'bg-gray-100'}
+                                                ${turn.playerNum === 1 
+                                                    ? 'border-l-4 border-blue-500' 
+                                                    : 'border-l-4 border-orange-500'}`}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <span className={`font-medium ${
+                                                    turn.playerNum === 1 ? 'text-blue-400' : 'text-orange-400'
+                                                }`}>
+                                                    {turn.playerName}
+                                                </span>
+                                                <span className="opacity-75">
+                                                    Inning {turn.inning}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <span className={`${
+                                                    turn.action === 'Miss' ? 'text-red-400' :
+                                                    turn.points > 0 ? 'text-green-400' :
+                                                    turn.points < 0 ? 'text-red-400' : ''
+                                                }`}>
+                                                    {turn.action}
+                                                    {turn.points !== undefined && turn.points !== 0 && (
+                                                        <span className={turn.points > 0 ? 'text-green-400' : 'text-red-400'}>
+                                                            {' '}({turn.points > 0 ? '+' : ''}{turn.points})
+                                                        </span>
+                                                    )}
+                                                </span>
+                                                <span className="text-sm opacity-60">
+                                                    {timeString}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <span className={`${
-                                                turn.action === 'Miss' ? 'text-red-400' :
-                                                turn.points > 0 ? 'text-green-400' :
-                                                turn.points < 0 ? 'text-red-400' : ''
-                                            }`}>
-                                                {turn.action}
-                                                {turn.points !== undefined && turn.points !== 0 && (
-                                                    <span className={turn.points > 0 ? 'text-green-400' : 'text-red-400'}>
-                                                        {' '}({turn.points > 0 ? '+' : ''}{turn.points})
-                                                    </span>
-                                                )}
-                                            </span>
-                                            <span className="text-sm opacity-60">
-                                                {turn.timestamp}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -1861,7 +1908,7 @@ export default function PoolScoringComponent() {
                                     })}
                                 </div>
 
-                                <div className="text-center mt-6">
+                                <div className="text-center mt-6 space-x-4">
                                     <p className="opacity-60 mb-2">Game Time: {formatTime(gameTime)}</p>
                                     <button
                                         onClick={startNewGame}
@@ -1869,6 +1916,13 @@ export default function PoolScoringComponent() {
                                             text-purple-300 rounded-full transition-colors text-lg"
                                     >
                                         New Game
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/history')}
+                                        className="px-8 py-3 bg-blue-500/20 hover:bg-blue-500/30 
+                                            text-blue-300 rounded-full transition-colors text-lg"
+                                    >
+                                        View History
                                     </button>
                                 </div>
                             </div>
@@ -1911,6 +1965,64 @@ export default function PoolScoringComponent() {
                     </div>
                 )}
             </div>
+
+            {/* Add menu dropdown at root level */}
+            {showMenu && (
+                <div className="fixed inset-0 z-[9999]" onClick={() => setShowMenu(false)}>
+                    <div 
+                        className={`fixed top-16 left-4 w-40 py-2 rounded-lg shadow-lg
+                            ${isDarkMode 
+                                ? 'bg-black/95 border border-white/10' 
+                                : 'bg-white border border-gray-200'}`}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            type="button"
+                            onClick={() => {
+                                navigate('/');
+                                setShowMenu(false);
+                            }}
+                            className={`w-full px-4 py-2 text-left transition-colors flex items-center gap-2 cursor-pointer
+                                ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            Home
+                        </button>
+                        <button 
+                            type="button"
+                            onClick={() => {
+                                navigate('/history');
+                                setShowMenu(false);
+                            }}
+                            className={`w-full px-4 py-2 text-left transition-colors flex items-center gap-2 cursor-pointer
+                                ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            History
+                        </button>
+                        <button 
+                            type="button"
+                            onClick={() => {
+                                localStorage.removeItem('token');
+                                localStorage.removeItem('userId');
+                                navigate('/login');
+                                setShowMenu(false);
+                            }}
+                            className={`w-full px-4 py-2 text-left transition-colors flex items-center gap-2 cursor-pointer
+                                ${isDarkMode ? 'hover:bg-white/10 text-red-400' : 'hover:bg-gray-100 text-red-600'}`}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

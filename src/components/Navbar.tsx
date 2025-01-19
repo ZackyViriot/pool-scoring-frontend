@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
 
 interface NavbarProps {
@@ -8,6 +8,17 @@ interface NavbarProps {
 }
 
 export default function Navbar({ isDarkMode, setIsDarkMode }: NavbarProps) {
+  const navigate = useNavigate();
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    navigate('/');
+  };
+
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-200
       ${isDarkMode 
@@ -22,21 +33,38 @@ export default function Navbar({ isDarkMode, setIsDarkMode }: NavbarProps) {
 
           <div className="flex items-center space-x-8">
             <Link 
-              to="/scoring" 
+              to="/" 
               className={`font-medium hover:opacity-75 transition-opacity ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-600'
               }`}
             >
-              Scoring
+              Home
             </Link>
             <Link 
-              to="/history" 
+              to="/pool-scoring" 
+              className={`font-medium hover:opacity-75 transition-opacity ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+              }`}
+            >
+              Game
+            </Link>
+            <button 
+              onClick={scrollToTop}
               className={`font-medium hover:opacity-75 transition-opacity ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-600'
               }`}
             >
               History
-            </Link>
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className={`font-medium hover:opacity-75 transition-opacity ${
+                isDarkMode ? 'text-red-400' : 'text-red-600'
+              }`}
+            >
+              Logout
+            </button>
 
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}

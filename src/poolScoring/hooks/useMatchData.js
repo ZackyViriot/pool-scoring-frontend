@@ -48,6 +48,8 @@ export const useMatchData = () => {
             },
             player1Stats: createPlayerStats(player1State),
             player2Stats: createPlayerStats(player2State),
+            userId: localStorage.getItem('userId'),
+            gameType: '8-ball',
             innings: innings.map(inning => ({
                 playerNumber: inning.playerNumber,
                 playerName: inning.playerName || 'Unknown Player',

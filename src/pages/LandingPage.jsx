@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import LoginForm from '../components/auth/LoginForm';
 import RegisterForm from '../components/auth/RegisterForm';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.tsx';
 import LivePreview from '../components/LivePreview';
 import Pricing from '../components/Pricing';
 
@@ -32,28 +32,33 @@ export default function LandingPage() {
                     <div>
                         {user ? (
                             <div className="flex items-center gap-2 sm:gap-4">
-                                <span className="text-gray-300 text-sm sm:text-base">Welcome, {user.name}</span>
                                 <Link
                                     to="/pool-scoring"
-                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors text-white text-sm sm:text-base"
+                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors text-sm sm:text-base"
                                 >
-                                    Go to App
+                                    Game
+                                </Link>
+                                <Link
+                                    to="/history"
+                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors text-sm sm:text-base"
+                                >
+                                    History
                                 </Link>
                                 <button
                                     onClick={logout}
-                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm sm:text-base"
+                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm sm:text-base"
                                 >
                                     Logout
                                 </button>
                             </div>
                         ) : (
-                            <div className="flex gap-2 sm:gap-4">
+                            <div className="flex items-center gap-2 sm:gap-4">
                                 <button
                                     onClick={() => {
                                         setAuthMode('login');
                                         setShowAuthModal(true);
                                     }}
-                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors text-sm sm:text-base"
+                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors text-sm sm:text-base"
                                 >
                                     Login
                                 </button>
@@ -62,7 +67,7 @@ export default function LandingPage() {
                                         setAuthMode('register');
                                         setShowAuthModal(true);
                                     }}
-                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors text-sm sm:text-base"
+                                    className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors text-sm sm:text-base"
                                 >
                                     Register
                                 </button>

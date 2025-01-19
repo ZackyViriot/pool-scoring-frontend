@@ -26,16 +26,23 @@ interface PlayerStats {
   runHistory: number[];
 }
 
-interface InningTurn {
-  player: string;
-  pointsScored: number;
-  ballsPocketed: string[];
+interface Turn {
+  playerNumber: number;
+  playerName: string;
+  ballsPocketed: number;
+  action: string;
   timestamp: Date;
-}
-
-interface Inning {
-  inningNumber: number;
-  turns: InningTurn[];
+  score: number;
+  inning: number;
+  points: number;
+  isBreak: boolean;
+  isScratch: boolean;
+  isSafetyPlay: boolean;
+  isDefensiveShot: boolean;
+  isFoul: boolean;
+  isBreakingFoul: boolean;
+  isIntentionalFoul: boolean;
+  isMiss: boolean;
 }
 
 interface Match {
@@ -49,8 +56,8 @@ interface Match {
   duration: number;
   player1Stats: PlayerStats;
   player2Stats: PlayerStats;
-  innings: Inning[];
-  createdAt: string;
+  innings: Turn[];
+  matchDate: Date;
 }
 
 interface MatchCardProps {
@@ -65,198 +72,315 @@ const formatDuration = (seconds: number): string => {
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
+const formatDate = (date: Date | string): string => {
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(dateObj.getTime())) {
+      return 'Invalid date';
+    }
+    return format(dateObj, 'MMM d, yyyy h:mm a');
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Invalid date';
+  }
+};
+
+const formatTimeOnly = (dateString: string | Date): string => {
+  try {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    if (isNaN(date.getTime())) {
+      return 'Invalid time';
+    }
+    return format(date, 'h:mm a');
+  } catch (error) {
+    return 'Invalid time';
+  }
+};
+
 export const MatchCard: React.FC<MatchCardProps> = ({ match, isDarkMode, onClick }) => {
   const [showDetails, setShowDetails] = useState(false);
-
-  const handleClick = () => {
-    setShowDetails(true);
-  };
-
-  // Helper function to safely count fouls
-  const countFouls = (playerId: string) => {
-    if (!match.innings) return 0;
-    return match.innings.reduce((total, inning) => 
-      total + (inning.turns || []).filter(turn => 
-        turn.player === playerId && turn.pointsScored < 0
-      ).length, 0
-    );
-  };
 
   return (
     <>
       <Card 
-        onClick={handleClick}
-        sx={{ 
-          backgroundColor: isDarkMode ? '#000000' : 'inherit',
-          borderRadius: '16px'
-        }}
-        className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
+        onClick={() => setShowDetails(true)}
+        className={`cursor-pointer transition-all duration-200 ${
           isDarkMode 
-            ? 'text-gray-200 border border-gray-800 hover:bg-gray-900' 
-            : 'bg-white/80 backdrop-blur-sm border border-gray-200 shadow-lg'
+            ? 'bg-[#1f2437] hover:bg-[#1f2437] border border-gray-700' 
+            : 'bg-white hover:bg-gray-50 border border-gray-300 shadow-lg hover:shadow-md'
         }`}
+        sx={{
+          backgroundColor: isDarkMode ? '#1f2437' : 'white',
+          backgroundImage: 'none',
+          '& .MuiCardContent-root': {
+            backgroundColor: 'inherit'
+          }
+        }}
       >
         <CardContent>
-          <div className="flex justify-between items-center mb-4">
-            <Typography variant="h6" className={isDarkMode ? 'text-gray-200' : 'text-gray-900'}>
-              {match.gameType || 'Unknown Game'}
-            </Typography>
-            <div className={`px-3 py-1 rounded-full text-xs ${
-              isDarkMode ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-600'
-            }`}>
-              {formatDuration(match.duration)}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <Typography variant="h6" className={isDarkMode ? 'text-white' : 'text-gray-800'}>
+                {match.gameType || 'Straight Pool'}
+              </Typography>
+              <div className={`px-3 py-1 rounded-full text-xs ${
+                isDarkMode ? 'bg-[#2a2f3e] text-gray-300' : 'bg-gray-200 text-gray-700'
+              }`}>
+                {formatDuration(match.duration)}
+              </div>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className={`p-3 rounded-lg ${
-              isDarkMode ? 'bg-gray-900 border border-gray-800' : 'bg-gray-50 border border-gray-200'
-            }`}>
-              <Typography variant="body2" className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                {match.player1?.name || 'Player 1'}
-              </Typography>
-              <Typography variant="h5" className={`font-bold mt-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                {match.player1Score}
-              </Typography>
-            </div>
-            <div className={`p-3 rounded-lg ${
-              isDarkMode ? 'bg-gray-900 border border-gray-800' : 'bg-gray-50 border border-gray-200'
-            }`}>
-              <Typography variant="body2" className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                {match.player2?.name || 'Player 2'}
-              </Typography>
-              <Typography variant="h5" className={`font-bold mt-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                {match.player2Score}
-              </Typography>
-            </div>
-          </div>
 
-          <div className="flex items-center justify-between text-sm mt-4">
-            <div className={`px-2 py-1 rounded-full ${
-              isDarkMode ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-600'
-            }`}>
-              Winner: {match.winner?.name || 'Unknown'}
+            <div className="grid grid-cols-2 gap-4">
+              <div className={`p-3 rounded-lg ${
+                isDarkMode ? 'bg-[#2a2f3e]' : 'bg-gray-100 shadow-inner'
+              }`}>
+                <div className="text-blue-400 font-medium">
+                  {match.player1.name}
+                </div>
+                <div className="text-2xl font-bold text-blue-500 mt-1">
+                  {match.player1Score}
+                </div>
+              </div>
+              <div className={`p-3 rounded-lg ${
+                isDarkMode ? 'bg-[#2a2f3e]' : 'bg-gray-100'
+              }`}>
+                <div className="text-orange-400 font-medium">
+                  {match.player2.name}
+                </div>
+                <div className="text-2xl font-bold text-orange-500 mt-1">
+                  {match.player2Score}
+                </div>
+              </div>
             </div>
-            <div className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
-              {format(new Date(match.createdAt), 'MMM d, yyyy h:mm a')}
+
+            <div className="flex justify-between items-center text-sm">
+              <div className={isDarkMode ? 'text-gray-300' : 'text-gray-500'}>
+                Winner: <span className={isDarkMode ? 'text-white' : 'text-gray-700'}>{match.winner?.name}</span>
+              </div>
+              <div className={isDarkMode ? 'text-gray-300' : 'text-gray-500'}>
+                {formatDate(match.matchDate)}
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Dialog 
-        open={showDetails} 
+      <Dialog
+        open={showDetails}
         onClose={() => setShowDetails(false)}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
         PaperProps={{
           style: {
-            backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
-            borderRadius: '16px',
-          }
+            backgroundColor: 'transparent',
+            boxShadow: 'none',
+          },
         }}
+        className={isDarkMode ? 'dark' : ''}
       >
-        <div className={`p-6 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-          <div className="flex justify-between items-center mb-6">
-            <Typography variant="h5" className="font-bold">
-              Game History
-            </Typography>
-            <button 
-              onClick={() => setShowDetails(false)}
-              className={`p-2 rounded-full hover:bg-gray-800 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}
-            >
-              ✕
-            </button>
-          </div>
+        <div className={`p-6 rounded-lg ${isDarkMode ? 'bg-[#1a1f2e] border border-gray-700' : 'bg-white'}`}>
+          {/* Game Summary Section */}
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <Typography variant="h5" className={isDarkMode ? 'text-white' : 'text-gray-900'}>
+                  {match.gameType || 'Straight Pool'}
+                </Typography>
+                <Typography variant="subtitle2" className="text-gray-400 mt-1">
+                  {formatDate(match.matchDate)} • Game Time: {formatDuration(match.duration)}
+                </Typography>
+              </div>
+              <button 
+                onClick={() => setShowDetails(false)}
+                className="text-gray-400 hover:text-gray-200"
+              >
+                ✕
+              </button>
+            </div>
 
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div>
-              <div className="text-lg font-medium mb-2">{match.player1.name}</div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Final Score</span>
-                  <span>{match.player1Score}</span>
+            {/* Player Stats Cards */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Player 1 Stats */}
+              <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-[#2a2f3e] border-[#3a3f4e]' : 'bg-gray-50 border-gray-300 shadow-sm'} border`}>
+                <div className="flex justify-between items-center mb-4">
+                  <div className="text-blue-400 font-medium text-lg">{match.player1.name}</div>
+                  <div className="text-2xl font-bold text-blue-500">{match.player1Score}</div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Best Run</span>
-                  <span>{match.player1Stats?.bestRun || 0}</span>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Total Points:</span>
+                    <span className="text-blue-500 font-medium">{match.player1Stats.totalPoints}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Total Innings:</span>
+                    <span className="text-blue-500 font-medium">{match.player1Stats.totalInnings}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Best Run:</span>
+                    <span className="text-blue-500 font-medium">{match.player1Stats.bestRun}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Current Run:</span>
+                    <span className="text-blue-500 font-medium">{match.player1Stats.currentRun}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Safes:</span>
+                    <span className="text-blue-500 font-medium">{match.player1Stats.safes}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Misses:</span>
+                    <span className="text-blue-500 font-medium">{match.player1Stats.misses}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Scratches:</span>
+                    <span className="text-blue-500 font-medium">{match.player1Stats.scratches}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Fouls:</span>
+                    <span className="text-blue-500 font-medium">{match.player1Stats.fouls}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Breaking Fouls:</span>
+                    <span className="text-blue-500 font-medium">{match.player1Stats.breakingFouls}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Intentional Fouls:</span>
+                    <span className="text-blue-500 font-medium">{match.player1Stats.intentionalFouls}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Total Fouls</span>
-                  <span>{(match.player1Stats?.fouls || 0) + (match.player1Stats?.intentionalFouls || 0) + (match.player1Stats?.breakingFouls || 0)}</span>
+              </div>
+
+              {/* Player 2 Stats */}
+              <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-[#2a2f3e] border-[#3a3f4e]' : 'bg-gray-50 border-gray-200'} border`}>
+                <div className="flex justify-between items-center mb-4">
+                  <div className="text-orange-400 font-medium text-lg">{match.player2.name}</div>
+                  <div className="text-2xl font-bold text-orange-500">{match.player2Score}</div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Safes</span>
-                  <span>{match.player1Stats?.safes || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Scratches</span>
-                  <span>{match.player1Stats?.scratches || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Misses</span>
-                  <span>{match.player1Stats?.misses || 0}</span>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Total Points:</span>
+                    <span className="text-orange-500 font-medium">{match.player2Stats.totalPoints}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Total Innings:</span>
+                    <span className="text-orange-500 font-medium">{match.player2Stats.totalInnings}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Best Run:</span>
+                    <span className="text-orange-500 font-medium">{match.player2Stats.bestRun}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Current Run:</span>
+                    <span className="text-orange-500 font-medium">{match.player2Stats.currentRun}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Safes:</span>
+                    <span className="text-orange-500 font-medium">{match.player2Stats.safes}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Misses:</span>
+                    <span className="text-orange-500 font-medium">{match.player2Stats.misses}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Scratches:</span>
+                    <span className="text-orange-500 font-medium">{match.player2Stats.scratches}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Fouls:</span>
+                    <span className="text-orange-500 font-medium">{match.player2Stats.fouls}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Breaking Fouls:</span>
+                    <span className="text-orange-500 font-medium">{match.player2Stats.breakingFouls}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Intentional Fouls:</span>
+                    <span className="text-orange-500 font-medium">{match.player2Stats.intentionalFouls}</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <div>
-              <div className="text-lg font-medium mb-2">{match.player2.name}</div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Final Score</span>
-                  <span>{match.player2Score}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Best Run</span>
-                  <span>{match.player2Stats?.bestRun || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Total Fouls</span>
-                  <span>{(match.player2Stats?.fouls || 0) + (match.player2Stats?.intentionalFouls || 0) + (match.player2Stats?.breakingFouls || 0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Safes</span>
-                  <span>{match.player2Stats?.safes || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Scratches</span>
-                  <span>{match.player2Stats?.scratches || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Misses</span>
-                  <span>{match.player2Stats?.misses || 0}</span>
-                </div>
-              </div>
-            </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="font-medium mb-2">Scoring Runs</div>
-            {(match.innings || []).map((inning, i) => 
-              (inning.turns || []).map((turn, j) => {
-                const playerName = turn.player === match.player1._id ? match.player1.name : match.player2.name;
-                if (turn.pointsScored > 0) {
-                  return (
-                    <div key={`${i}-${j}`} className="flex justify-between items-center">
-                      <span>{playerName} - Inning {inning.inningNumber}</span>
-                      <span className="text-green-500">+{turn.pointsScored}</span>
-                    </div>
-                  );
-                } else if (turn.pointsScored < 0) {
-                  return (
-                    <div key={`${i}-${j}`} className="flex justify-between items-center">
-                      <span>{playerName} - Inning {inning.inningNumber}</span>
-                      <span className="text-red-500">{turn.pointsScored}</span>
-                    </div>
-                  );
-                }
-                return null;
-              })
-            )}
-          </div>
+          {/* Game History Section */}
+          <div>
+            <table className="w-full">
+              <thead>
+                <tr className={`border-b ${isDarkMode ? 'border-[#3a3f4e]' : 'border-gray-200'}`}>
+                  <th className="text-left px-6 py-3 text-gray-400 font-medium">Player</th>
+                  <th className="text-left px-6 py-3 text-gray-400 font-medium">Inning</th>
+                  <th className="text-left px-6 py-3 text-gray-400 font-medium">Action</th>
+                  <th className="text-right px-6 py-3 text-gray-400 font-medium">Time</th>
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${isDarkMode ? 'divide-[#3a3f4e]' : 'divide-gray-200'}`}>
+                {Array.isArray(match.innings) && match.innings.length > 0 ? (
+                  match.innings.map((turn) => {
+                    const isPlayer1 = turn.playerNumber === 1;
+                    const playerName = isPlayer1 ? match.player1.name : match.player2.name;
+                    const textColor = isPlayer1 ? 'text-blue-400' : 'text-orange-400';
+                    
+                    let actionText = '';
+                    let actionColor = 'text-gray-400';
 
-          <div className="mt-6 text-sm text-center text-gray-500">
-            Game Time: {formatDuration(match.duration)}
+                    if (turn.isBreak && turn.ballsPocketed > 0) {
+                      actionText = `Break - Made ${turn.ballsPocketed} ball${turn.ballsPocketed !== 1 ? 's' : ''} (+${turn.points})`;
+                      actionColor = 'text-green-500';
+                    } else if (turn.isFoul) {
+                      actionText = 'Foul (-1)';
+                      actionColor = 'text-red-500';
+                    } else if (turn.isBreakingFoul) {
+                      actionText = 'Breaking Foul (-2)';
+                      actionColor = 'text-red-500';
+                    } else if (turn.isIntentionalFoul) {
+                      actionText = 'Intentional Foul (-2)';
+                      actionColor = 'text-red-500';
+                    } else if (turn.isScratch) {
+                      actionText = turn.isBreak ? 'Break Scratch (-2)' : 'Scratch (-1)';
+                      actionColor = 'text-red-500';
+                    } else if (turn.isSafetyPlay || turn.isDefensiveShot) {
+                      actionText = 'Safe';
+                      actionColor = 'text-yellow-500';
+                    } else if (turn.isMiss) {
+                      actionText = 'Miss';
+                      actionColor = 'text-red-500';
+                    } else if (turn.ballsPocketed > 0) {
+                      actionText = `Made ${turn.ballsPocketed} ball${turn.ballsPocketed !== 1 ? 's' : ''} (+${turn.points})`;
+                      actionColor = 'text-green-500';
+                    } else if (turn.ballsPocketed === 0) {
+                      actionText = 'No balls pocketed';
+                      actionColor = 'text-gray-500';
+                    }
+
+                    return (
+                      <tr 
+                        key={`${turn.inning}-${turn.playerNumber}`}
+                        className="hover:bg-gray-700/30"
+                      >
+                        <td className="px-6 py-3">
+                          <span className={`${textColor} font-medium`}>{playerName}</span>
+                        </td>
+                        <td className="px-6 py-3">
+                          <span className="text-gray-400">#{turn.inning}</span>
+                        </td>
+                        <td className="px-6 py-3">
+                          <span className={actionColor}>{actionText}</span>
+                        </td>
+                        <td className="px-6 py-3 text-right">
+                          <span className="text-gray-500">{formatTimeOnly(turn.timestamp)}</span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="text-center text-gray-500 py-4">
+                      No game history available
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </Dialog>

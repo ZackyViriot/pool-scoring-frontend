@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 import { StripeProvider } from './context/StripeContext';
 import PoolScoringComponent from './poolScoring/PoolScoringComponent';
 import LandingPage from './pages/LandingPage';
