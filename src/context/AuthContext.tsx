@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export interface User {
+  id: string;
   name: string;
   email: string;
 }
@@ -21,7 +22,7 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   : 'http://localhost:8000';                   // Development URL
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -49,14 +50,21 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
+        throw new Error('Login failed');
       }
 
       const data = await response.json();
+      
+      // Store token and user data
       localStorage.setItem('token', data.access_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setUser(data.user);
+      const userData: User = {
+        id: data.id,
+        name: data.name,
+        email: data.email
+      };
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+
       navigate('/pool-scoring');
       return data;
     } catch (error) {

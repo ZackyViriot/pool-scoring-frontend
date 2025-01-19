@@ -5,7 +5,7 @@ import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.tsx';
+import { useAuth } from '../context/AuthContext';
 
 const getApiUrl = () => {
   if (typeof window !== 'undefined') {
@@ -1201,10 +1201,9 @@ export default function PoolScoringComponent() {
     // Update saveMatchToDatabase function
     const saveMatchToDatabase = async (gameResult, duration) => {
         try {
-            const userId = localStorage.getItem('userId');
             const token = localStorage.getItem('token');
             
-            if (!userId || !token) {
+            if (!user || !token) {
                 console.error('No authentication found, redirecting to login');
                 navigate('/login');
                 throw new Error('Authentication information not found');
@@ -1256,7 +1255,7 @@ export default function PoolScoringComponent() {
                 },
                 gameType: "Straight Pool",
                 duration: parseInt(duration) || 0,
-                userId: userId,
+                userId: user.id,
                 player1Stats: player1Stats,
                 player2Stats: player2Stats,
                 innings: turnHistory.map((turn) => {
