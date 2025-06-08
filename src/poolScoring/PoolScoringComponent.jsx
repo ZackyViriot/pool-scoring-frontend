@@ -101,6 +101,9 @@ export default function PoolScoringComponent() {
         breakingFouls: 0
     }));
     const [gameType, setGameType] = useState(() => getSavedGameProperty('gameType', 'Straight Pool'));
+    
+    // Ref for debounced save function
+    const saveGameStateRef = useRef();
 
     // All useEffect hooks moved here
     useEffect(() => {
@@ -285,7 +288,6 @@ export default function PoolScoringComponent() {
     };
 
     // Debounced save to prevent too frequent localStorage writes
-    const saveGameStateRef = useRef();
     const saveGameState = () => {
         const gameState = {
             gameStarted,
