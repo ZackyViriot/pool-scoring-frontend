@@ -5,6 +5,7 @@ import { StripeProvider } from './context/StripeContext';
 import PoolScoringComponent from './poolScoring/PoolScoringComponent.jsx';
 import LandingPage from './pages/LandingPage';
 import History from './pages/History.tsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 // Create a separate component for protected routes
 const ProtectedRoutes = () => {
@@ -20,13 +21,15 @@ const ProtectedRoutes = () => {
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <StripeProvider>
-          <ProtectedRoutes />
-        </StripeProvider>
-      </AuthProvider>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <AuthProvider>
+          <StripeProvider>
+            <ProtectedRoutes />
+          </StripeProvider>
+        </AuthProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

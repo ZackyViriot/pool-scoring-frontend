@@ -6,6 +6,12 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext.tsx";
+import { getSavedGameProperty, safeSaveLocalStorage } from "../utils/localStorage.js";
+
+// Import test utilities in development
+if (process.env.NODE_ENV === 'development') {
+    import("../utils/testLocalStorage.js");
+}
 
 const getApiUrl = () => {
     if (typeof window !== 'undefined') {
@@ -25,63 +31,21 @@ export default function PoolScoringComponent() {
 
     // All state hooks moved to the top level
     const [showMenu, setShowMenu] = useState(false);
-    const [gameStarted, setGameStarted] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).gameStarted : false;
-    });
-    const [objectBallsOnTable, setObjectBallsOnTable] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).objectBallsOnTable : 15;
-    });
-    const [activePlayer, setActivePlayer] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).activePlayer : 1;
-    });
-    const [targetGoal, setTargetGoal] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).targetGoal : 125;
-    });
-    const [gameTime, setGameTime] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).gameTime : 0;
-    });
-    const [isTimerRunning, setIsTimerRunning] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).isTimerRunning : false;
-    });
-    const [currentInning, setCurrentInning] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).currentInning : 1;
-    });
-    const [breakPlayer, setBreakPlayer] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).breakPlayer : 1;
-    });
-    const [scoreHistory, setScoreHistory] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).scoreHistory : [];
-    });
-    const [bestRun, setBestRun] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).bestRun : 0;
-    });
-    const [isBreakShot, setIsBreakShot] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).isBreakShot : true;
-    });
-    const [player1FoulHistory, setPlayer1FoulHistory] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).player1FoulHistory : [];
-    });
-    const [player2FoulHistory, setPlayer2FoulHistory] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).player2FoulHistory : [];
-    });
+    const [gameStarted, setGameStarted] = useState(() => getSavedGameProperty('gameStarted', false));
+    const [objectBallsOnTable, setObjectBallsOnTable] = useState(() => getSavedGameProperty('objectBallsOnTable', 15));
+    const [activePlayer, setActivePlayer] = useState(() => getSavedGameProperty('activePlayer', 1));
+    const [targetGoal, setTargetGoal] = useState(() => getSavedGameProperty('targetGoal', 125));
+    const [gameTime, setGameTime] = useState(() => getSavedGameProperty('gameTime', 0));
+    const [isTimerRunning, setIsTimerRunning] = useState(() => getSavedGameProperty('isTimerRunning', false));
+    const [currentInning, setCurrentInning] = useState(() => getSavedGameProperty('currentInning', 1));
+    const [breakPlayer, setBreakPlayer] = useState(() => getSavedGameProperty('breakPlayer', 1));
+    const [scoreHistory, setScoreHistory] = useState(() => getSavedGameProperty('scoreHistory', []));
+    const [bestRun, setBestRun] = useState(() => getSavedGameProperty('bestRun', 0));
+    const [isBreakShot, setIsBreakShot] = useState(() => getSavedGameProperty('isBreakShot', true));
+    const [player1FoulHistory, setPlayer1FoulHistory] = useState(() => getSavedGameProperty('player1FoulHistory', []));
+    const [player2FoulHistory, setPlayer2FoulHistory] = useState(() => getSavedGameProperty('player2FoulHistory', []));
     const [showHistoryModal, setShowHistoryModal] = useState(false);
-    const [turnHistory, setTurnHistory] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).turnHistory : [];
-    });
+    const [turnHistory, setTurnHistory] = useState(() => getSavedGameProperty('turnHistory', []));
     const [showBreakFoulModal, setShowBreakFoulModal] = useState(false);
     const [breakFoulPlayer, setBreakFoulPlayer] = useState(null);
     const [showWinModal, setShowWinModal] = useState(false);
@@ -98,71 +62,73 @@ export default function PoolScoringComponent() {
         width: typeof window !== 'undefined' ? window.innerWidth : 1200,
         height: typeof window !== 'undefined' ? window.innerHeight : 800,
     });
-    const [player1, setPlayer1] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).player1 : {
-            name: "",
-            score: 0,
-            handicap: 0,
-            totalPoints: 0,
-            totalInnings: 0,
-            breakAndRuns: 0,
-            safetyPlays: 0,
-            safes: 0,
-            defensiveShots: 0,
-            scratches: 0,
-            avgPointsPerInning: 0,
-            fouls: 0,
-            intentionalFouls: 0,
-            misses: 0,
-            bestRun: 0,
-            currentRun: 0,
-            breakingFouls: 0
-        };
-    });
-    const [player2, setPlayer2] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).player2 : {
-            name: "",
-            score: 0,
-            handicap: 0,
-            totalPoints: 0,
-            totalInnings: 0,
-            breakAndRuns: 0,
-            safetyPlays: 0,
-            safes: 0,
-            defensiveShots: 0,
-            scratches: 0,
-            avgPointsPerInning: 0,
-            fouls: 0,
-            intentionalFouls: 0,
-            misses: 0,
-            bestRun: 0,
-            currentRun: 0,
-            breakingFouls: 0
-        };
-    });
-    const [gameType, setGameType] = useState(() => {
-        const saved = localStorage.getItem('poolGame');
-        return saved ? JSON.parse(saved).gameType : 'Straight Pool';
-    });
+    const [player1, setPlayer1] = useState(() => getSavedGameProperty('player1', {
+        name: "",
+        score: 0,
+        handicap: 0,
+        totalPoints: 0,
+        totalInnings: 0,
+        breakAndRuns: 0,
+        safetyPlays: 0,
+        safes: 0,
+        defensiveShots: 0,
+        scratches: 0,
+        avgPointsPerInning: 0,
+        fouls: 0,
+        intentionalFouls: 0,
+        misses: 0,
+        bestRun: 0,
+        currentRun: 0,
+        breakingFouls: 0
+    }));
+    const [player2, setPlayer2] = useState(() => getSavedGameProperty('player2', {
+        name: "",
+        score: 0,
+        handicap: 0,
+        totalPoints: 0,
+        totalInnings: 0,
+        breakAndRuns: 0,
+        safetyPlays: 0,
+        safes: 0,
+        defensiveShots: 0,
+        scratches: 0,
+        avgPointsPerInning: 0,
+        fouls: 0,
+        intentionalFouls: 0,
+        misses: 0,
+        bestRun: 0,
+        currentRun: 0,
+        breakingFouls: 0
+    }));
+    const [gameType, setGameType] = useState(() => getSavedGameProperty('gameType', 'Straight Pool'));
 
     // All useEffect hooks moved here
     useEffect(() => {
         if (!user) {
-            navigate('/');
+            try {
+                navigate('/');
+            } catch (error) {
+                console.error('Navigation error:', error);
+                // Fallback to window.location if navigate fails
+                window.location.href = '/';
+            }
         }
     }, [user, navigate]);
 
     useEffect(() => {
         const checkAuth = () => {
-            const token = localStorage.getItem('token');
-            if (!token || !user) {
-                console.log('No authentication found, redirecting to login');
-                navigate('/login');
+            try {
+                const token = localStorage.getItem('token');
+                if (!token || !user) {
+                    console.log('No authentication found, redirecting to login');
+                    navigate('/login');
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error('Auth check error:', error);
                 return false;
             }
-            return true;
         };
 
         if (!checkAuth()) return;
@@ -222,9 +188,27 @@ export default function PoolScoringComponent() {
         player2FoulHistory
     ]);
 
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (saveGameStateRef.current) {
+                clearTimeout(saveGameStateRef.current);
+            }
+        };
+    }, []);
+
     // Rest of your component code...
 
-    if (!user) return null;
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+                    <p className="text-gray-300">Loading...</p>
+                </div>
+            </div>
+        );
+    }
 
     const formatTime = (seconds) => {
         const hours = Math.floor(seconds / 3600);
@@ -300,6 +284,8 @@ export default function PoolScoringComponent() {
         }
     };
 
+    // Debounced save to prevent too frequent localStorage writes
+    const saveGameStateRef = useRef();
     const saveGameState = () => {
         const gameState = {
             gameStarted,
@@ -320,7 +306,19 @@ export default function PoolScoringComponent() {
             player2,
             gameType
         };
-        localStorage.setItem('poolGame', JSON.stringify(gameState));
+        
+        // Clear previous timeout
+        if (saveGameStateRef.current) {
+            clearTimeout(saveGameStateRef.current);
+        }
+        
+        // Debounce the save operation
+        saveGameStateRef.current = setTimeout(() => {
+            const success = safeSaveLocalStorage('poolGame', gameState);
+            if (!success) {
+                console.warn('Failed to save game state to localStorage');
+            }
+        }, 100); // 100ms debounce
     };
 
     // Clear localStorage when game ends
@@ -1741,7 +1739,8 @@ export default function PoolScoringComponent() {
                                         }
                                     } catch (error) {
                                         // Fallback to current time if any error occurs
-                                        timeString = format(new Date(), 'h:mm a');
+                                        console.warn('Error formatting turn timestamp:', error);
+                                        timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                                     }
                                     
                                     return (
