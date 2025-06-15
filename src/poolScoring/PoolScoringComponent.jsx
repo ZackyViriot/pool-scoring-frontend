@@ -101,6 +101,8 @@ export default function PoolScoringComponent() {
         breakingFouls: 0
     }));
     const [gameType, setGameType] = useState(() => getSavedGameProperty('gameType', 'Straight Pool'));
+    const [showRunsModal, setShowRunsModal] = useState(false);
+    const [selectedPlayer, setSelectedPlayer] = useState(null);
     
     // Ref for debounced save function
     const saveGameStateRef = useRef();
@@ -874,7 +876,7 @@ export default function PoolScoringComponent() {
                 {objectBallsOnTable}
             </div>
             <div className="text-xs opacity-60">
-                Balls
+                BOT
             </div>
         </div>
     );
@@ -1022,64 +1024,36 @@ export default function PoolScoringComponent() {
         const setCurrentPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
         const setFoulHistory = playerNum === 1 ? setPlayer1FoulHistory : setPlayer2FoulHistory;
         const remainingBalls = objectBallsOnTable;
+        const pointsToAward = remainingBalls - 1; // Subtract 1 from the total
         
-        addToTurnHistory(playerNum, 'Finish Rack', remainingBalls);
+        addToTurnHistory(playerNum, 'Finish Rack', pointsToAward);
 
         setFoulHistory([]); // Reset foul history on successful finish
         setObjectBallsOnTable(15); // Reset to 15 balls
 
-        const newScore = currentPlayerState.score + remainingBalls;
-        const newCurrentRun = currentPlayerState.currentRun + remainingBalls;
-
-        // Check for win condition
-        if (newScore >= targetGoal) {
-            const updatedPlayer = {
-                ...currentPlayerState,
-                score: newScore,
-                currentRun: newCurrentRun,
-                high: Math.max(currentPlayerState.high, newCurrentRun),
-                bestGameRun: Math.max(currentPlayerState.bestGameRun, newCurrentRun)
-            };
-            
-            // Calculate final stats for both players
-            const player1FinalStats = calculatePlayerStats(playerNum === 1 ? updatedPlayer : player1, 1);
-            const player2FinalStats = calculatePlayerStats(playerNum === 2 ? updatedPlayer : player2, 2);
-            
-            setWinner(playerNum);
-            setWinnerStats(playerNum === 1 ? player1FinalStats : player2FinalStats);
-            setShowWinModal(true);
-            setIsTimerRunning(false);
-            playWinSound();
-
-            // Update the player's state without saving the match (will be saved in useEffect)
-            setCurrentPlayer(prev => ({
-                ...prev,
-                score: newScore,
-                currentRun: newCurrentRun,
-                high: Math.max(prev.high, newCurrentRun),
-                bestGameRun: Math.max(prev.bestGameRun, newCurrentRun)
-            }));
-
-            // Save match with the final stats
-            saveMatchToDatabase({
-                winner: updatedPlayer,
-                loser: playerNum === 1 ? player2 : player1,
-                finalScore1: playerNum === 1 ? newScore : player2.score,
-                finalScore2: playerNum === 1 ? player2.score : newScore,
-                player1FinalStats: playerNum === 1 ? player1FinalStats : player2FinalStats,
-                player2FinalStats: playerNum === 2 ? player1FinalStats : player2FinalStats
-            }, gameTime);
-            
-            return;  // Don't switch turns if game is won
-        }
+        const newScore = currentPlayerState.score + pointsToAward;
+        const newCurrentRun = currentPlayerState.currentRun + pointsToAward;
+        const newBestRun = Math.max(currentPlayerState.bestRun || 0, newCurrentRun);
 
         setCurrentPlayer(prev => ({
             ...prev,
             score: newScore,
             currentRun: newCurrentRun,
+            bestRun: newBestRun,
             high: Math.max(prev.high, newCurrentRun),
             bestGameRun: Math.max(prev.bestGameRun, newCurrentRun)
         }));
+
+        // Check for win condition
+        if (newScore >= targetGoal) {
+            handleWin(playerNum, newScore, newCurrentRun, newBestRun);
+            return;
+        }
+
+        if (playerNum === 2) {
+            setCurrentInning(prev => prev + 1);
+        }
+        setActivePlayer(playerNum === 1 ? 2 : 1);
     };
 
     // Update calculatePlayerStats function to properly map frontend stats
@@ -1314,6 +1288,67 @@ export default function PoolScoringComponent() {
             console.error('Error formatting date:', error);
             return 'Invalid date';
         }
+    };
+
+    // Add this function before the return statement
+    const handleShowRuns = (playerNum) => {
+        setSelectedPlayer(playerNum);
+        setShowRunsModal(true);
+    };
+
+    // Update the getPlayerRuns function to group runs into turns
+    const getPlayerRuns = (playerNum) => {
+        const turns = [];
+        let currentTurn = {
+            shots: [],
+            totalPoints: 0,
+            inning: null,
+            startTime: null,
+            endTime: null
+        };
+        
+        turnHistory.forEach((turn, index) => {
+            if (turn.playerNum === playerNum) {
+                if (turn.action === 'Points' || turn.action === 'Finish Rack') {
+                    // Start a new turn if this is the first shot
+                    if (currentTurn.shots.length === 0) {
+                        currentTurn = {
+                            shots: [],
+                            totalPoints: 0,
+                            inning: turn.inning,
+                            startTime: turn.timestamp
+                        };
+                    }
+                    
+                    // Add shot to current turn
+                    currentTurn.shots.push({
+                        points: turn.points,
+                        timestamp: turn.timestamp
+                    });
+                    currentTurn.totalPoints += turn.points;
+                    currentTurn.endTime = turn.timestamp;
+                } else if (['Miss', 'Foul', 'Scratch', 'Safe', 'Breaking Foul', 'Intentional Foul'].includes(turn.action)) {
+                    // End current turn if there were any shots
+                    if (currentTurn.shots.length > 0) {
+                        turns.push({...currentTurn});
+                        currentTurn = {
+                            shots: [],
+                            totalPoints: 0,
+                            inning: null,
+                            startTime: null,
+                            endTime: null
+                        };
+                    }
+                }
+            }
+        });
+        
+        // Add the last turn if it exists
+        if (currentTurn.shots.length > 0) {
+            turns.push(currentTurn);
+        }
+        
+        return turns;
     };
 
     return (
@@ -1561,6 +1596,7 @@ export default function PoolScoringComponent() {
                                 <StatBox 
                                     label="Best"
                                     value={player1.bestRun || 0}
+                                    onClick={() => handleShowRuns(1)}
                                     color={isDarkMode ? 'text-blue-400' : 'text-blue-600'}
                                 />
                                 <StatBox 
@@ -1661,6 +1697,7 @@ export default function PoolScoringComponent() {
                                 <StatBox 
                                     label="Best"
                                     value={player2.bestRun || 0}
+                                    onClick={() => handleShowRuns(2)}
                                     color={isDarkMode ? 'text-orange-400' : 'text-orange-600'}
                                 />
                                 <StatBox 
@@ -2025,6 +2062,68 @@ export default function PoolScoringComponent() {
                             </svg>
                             Logout
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {showRunsModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm 
+                    flex items-center justify-center z-50">
+                    <div className={`rounded-xl p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto
+                        shadow-2xl animate-fadeIn transition-colors duration-200
+                        ${isDarkMode 
+                            ? 'bg-gradient-to-b from-gray-800 to-gray-900 border border-white/10' 
+                            : 'bg-gradient-to-b from-white to-gray-50 border border-gray-200'}`}>
+                        
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-2xl font-bold text-purple-400">
+                                {selectedPlayer === 1 ? player1.name || 'Player 1' : player2.name || 'Player 2'}'s Runs
+                            </h2>
+                            <button
+                                onClick={() => setShowRunsModal(false)}
+                                className="p-2 rounded-full hover:bg-gray-700/50"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            {getPlayerRuns(selectedPlayer).map((turn, index) => (
+                                <div key={index} className={`p-4 rounded-lg ${
+                                    isDarkMode ? 'bg-black/30' : 'bg-gray-100'
+                                }`}>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-purple-400 font-semibold">
+                                                Turn {index + 1}
+                                            </span>
+                                            <span className="opacity-60">
+                                                Inning {turn.inning}
+                                            </span>
+                                            <span className="text-green-400 font-bold">
+                                                Total: {turn.totalPoints}
+                                            </span>
+                                        </div>
+                                        <span className="text-sm opacity-60">
+                                            {new Date(turn.startTime).toLocaleTimeString()}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="space-y-2 mt-3">
+                                        {turn.shots.map((shot, shotIndex) => (
+                                            <div key={shotIndex} className="flex items-center gap-4 pl-4">
+                                                <span className="text-green-400">
+                                                    +{shot.points}
+                                                </span>
+                                                <span className="text-sm opacity-60">
+                                                    Shot {shotIndex + 1}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}
