@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Confetti from 'react-confetti';
 import useSound from 'use-sound';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
@@ -103,6 +103,58 @@ export default function PoolScoringComponent() {
     // Ref for debounced save function
     const saveGameStateRef = useRef();
 
+    // Memoized saveGameState function
+    const saveGameState = useCallback(() => {
+        const gameState = {
+            gameStarted,
+            objectBallsOnTable,
+            activePlayer,
+            targetGoal,
+            gameTime,
+            isTimerRunning,
+            currentInning,
+            breakPlayer,
+            scoreHistory,
+            bestRun,
+            isBreakShot,
+            player1FoulHistory,
+            player2FoulHistory,
+            turnHistory,
+            player1,
+            player2,
+            gameType
+        };
+        // Clear previous timeout
+        if (saveGameStateRef.current) {
+            clearTimeout(saveGameStateRef.current);
+        }
+        // Debounce the save operation
+        saveGameStateRef.current = setTimeout(() => {
+            const success = safeSaveLocalStorage('poolGame', gameState);
+            if (!success) {
+                console.warn('Failed to save game state to localStorage');
+            }
+        }, 100); // 100ms debounce
+    }, [
+        gameStarted,
+        objectBallsOnTable,
+        activePlayer,
+        targetGoal,
+        gameTime,
+        isTimerRunning,
+        currentInning,
+        breakPlayer,
+        scoreHistory,
+        bestRun,
+        isBreakShot,
+        player1FoulHistory,
+        player2FoulHistory,
+        turnHistory,
+        player1,
+        player2,
+        gameType
+    ]);
+
     // All useEffect hooks moved here
     useEffect(() => {
         if (!user) {
@@ -173,6 +225,7 @@ export default function PoolScoringComponent() {
         return () => clearInterval(interval);
     }, [isTimerRunning]);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (gameStarted) {
             saveGameState();
@@ -186,7 +239,8 @@ export default function PoolScoringComponent() {
         player2,
         turnHistory,
         player1FoulHistory,
-        player2FoulHistory
+        player2FoulHistory,
+        saveGameState
     ]);
 
     // Cleanup timeout on unmount
@@ -260,42 +314,6 @@ export default function PoolScoringComponent() {
             // Save the restored state
             saveGameState();
         }
-    };
-
-    // Debounced save to prevent too frequent localStorage writes
-    const saveGameState = () => {
-        const gameState = {
-            gameStarted,
-            objectBallsOnTable,
-            activePlayer,
-            targetGoal,
-            gameTime,
-            isTimerRunning,
-            currentInning,
-            breakPlayer,
-            scoreHistory,
-            bestRun,
-            isBreakShot,
-            player1FoulHistory,
-            player2FoulHistory,
-            turnHistory,
-            player1,
-            player2,
-            gameType
-        };
-        
-        // Clear previous timeout
-        if (saveGameStateRef.current) {
-            clearTimeout(saveGameStateRef.current);
-        }
-        
-        // Debounce the save operation
-        saveGameStateRef.current = setTimeout(() => {
-            const success = safeSaveLocalStorage('poolGame', gameState);
-            if (!success) {
-                console.warn('Failed to save game state to localStorage');
-            }
-        }, 100); // 100ms debounce
     };
 
     // Clear localStorage when game ends
