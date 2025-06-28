@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 // Define API URL based on environment
 const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://pool-scoring-backend-production.up.railway.app'
+  ? 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io'
   : 'http://localhost:8000';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

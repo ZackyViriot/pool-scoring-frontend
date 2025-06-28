@@ -57,7 +57,7 @@ const getApiUrl = () => {
   if (typeof window !== 'undefined') {
     return window.location.hostname === 'localhost' 
       ? 'http://localhost:8000'
-      : 'https://pool-scoring-backend-production.up.railway.app';
+      : 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
   }
   return 'http://localhost:8000';
 };
