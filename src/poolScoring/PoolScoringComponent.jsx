@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Confetti from 'react-confetti';
 import useSound from 'use-sound';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
-import axios from 'axios';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext.tsx";
@@ -21,8 +20,6 @@ const getApiUrl = () => {
     }
     return 'http://localhost:8000';
 };
-
-const API_BASE_URL = getApiUrl();
 
 export default function PoolScoringComponent() {
     const navigate = useNavigate();
@@ -50,7 +47,6 @@ export default function PoolScoringComponent() {
     const [breakFoulPlayer, setBreakFoulPlayer] = useState(null);
     const [showWinModal, setShowWinModal] = useState(false);
     const [winner, setWinner] = useState(null);
-    const [winnerStats, setWinnerStats] = useState(null);
     const [showGameStats, setShowGameStats] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -100,7 +96,7 @@ export default function PoolScoringComponent() {
         currentRun: 0,
         breakingFouls: 0
     }));
-    const [gameType, setGameType] = useState(() => getSavedGameProperty('gameType', 'Straight Pool'));
+    const [gameType] = useState(() => getSavedGameProperty('gameType', 'Straight Pool'));
     const [showRunsModal, setShowRunsModal] = useState(false);
     const [selectedPlayer, setSelectedPlayer] = useState(null);
     
@@ -228,35 +224,12 @@ export default function PoolScoringComponent() {
         return `${pad(minutes)}:${pad(remainingSeconds)}`;
     };
 
-    const calculateStats = (player) => {
-        const totalShots = player.misses + player.safes + player.high;
-        const accuracy = totalShots ? ((totalShots - player.misses) / totalShots * 100).toFixed(1) : 0;
-        const avgPointsPerInning = player.score / (player.misses + player.safes + 1);
-        
-        return {
-            accuracy: accuracy,
-            avgPointsPerInning: avgPointsPerInning.toFixed(1),
-            totalShots: totalShots,
-            foulsPerGame: player.fouls
-        };
-    };
-
     const undoLastAction = () => {
         if (scoreHistory.length > 0) {
             const lastAction = scoreHistory[scoreHistory.length - 1];
             
             // Save current state before restoring
-            const currentState = {
-                player1,
-                player2,
-                activePlayer,
-                currentInning,
-                objectBallsOnTable,
-                player1FoulHistory,
-                player2FoulHistory,
-                isBreakShot,
-                turnHistory: [...turnHistory]
-            };
+            // Removed unused currentState variable
             
             // Restore player states with all properties
             setPlayer1({
@@ -421,7 +394,6 @@ export default function PoolScoringComponent() {
         const player2FinalStats = calculatePlayerStats(playerNum === 2 ? updatedPlayer : player2, 2);
         
         setWinner(playerNum);
-        setWinnerStats(playerNum === 1 ? player1FinalStats : player2FinalStats);
         setShowWinModal(true);
         setIsTimerRunning(false);
         playWinSound();
@@ -493,7 +465,7 @@ export default function PoolScoringComponent() {
     const checkThreeFouls = (playerNum) => {
         const foulHistory = playerNum === 1 ? player1FoulHistory : player2FoulHistory;
         const setFoulHistory = playerNum === 1 ? setPlayer1FoulHistory : setPlayer2FoulHistory;
-        const player = playerNum === 1 ? player1 : player2;
+        // Removed unused player variable
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
 
         // Add current turn to foul history first
@@ -601,29 +573,6 @@ export default function PoolScoringComponent() {
         }
         
         setActivePlayer(playerNum === 1 ? 2 : 1);
-    };
-
-    const handleBreakScratch = (playerNum) => {
-        // Only allow actions for active player
-        if (playerNum !== activePlayer || !gameStarted) return;
-
-        saveStateToHistory();
-        saveGameState();
-        const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
-        
-        // Add to turn history
-        addToTurnHistory(playerNum, 'Break Scratch', -2);
-
-        setPlayer(prev => ({
-            ...prev,
-            score: prev.score - 2,
-            fouls: prev.fouls + 1,
-            currentRun: 0,
-            totalInnings: prev.totalInnings + 1
-        }));
-        
-        setActivePlayer(playerNum === 1 ? 2 : 1);
-        setIsBreakShot(false);
     };
 
     const handleScratch = (playerNum) => {
@@ -753,14 +702,12 @@ export default function PoolScoringComponent() {
         setShowWinModal(false);
         setShowGameStats(false);
         setWinner(null);
-        setWinnerStats(null);
     };
 
     const startNewGame = () => {
         setShowWinModal(false);
         setShowGameStats(false);
         setWinner(null);
-        setWinnerStats(null);
         endGame();
     };
 
@@ -789,11 +736,6 @@ export default function PoolScoringComponent() {
                 currentRun: 0
             }));
         }
-    };
-
-    const newRack = () => {
-        setObjectBallsOnTable(15);
-        setIsBreakShot(true);
     };
 
     // Add this function to generate detailed player stats
@@ -850,7 +792,6 @@ export default function PoolScoringComponent() {
         const totalFouls = details.foulDetails.length;
         const totalSafes = details.safeDetails.length;
         const totalMisses = details.missDetails.length;
-        const totalPoints = details.runDetails.reduce((sum, run) => sum + run.points, 0);
         const bestRun = Math.max(...details.runDetails.map(run => run.points), 0);
 
         return {
@@ -1065,7 +1006,7 @@ export default function PoolScoringComponent() {
         let totalScratches = player.scratches || 0;
         let totalIntentionalFouls = player.intentionalFouls || 0;
         let totalBreakingFouls = player.breakingFouls || 0;
-        let bestRunInGame = player.bestRun || 0;
+        // Removed unused bestRunInGame variable
         let currentRunCount = 0;
         let maxRunInGame = 0;
         let breakAndRuns = 0;
@@ -1273,20 +1214,6 @@ export default function PoolScoringComponent() {
         } catch (error) {
             console.error('Error in saveMatchToDatabase:', error);
             throw error;
-        }
-    };
-
-    // Update the formatDate function to handle date strings
-    const formatDate = (dateString) => {
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) {
-                return 'Invalid date';
-            }
-            return format(date, 'MMM d, yyyy');
-        } catch (error) {
-            console.error('Error formatting date:', error);
-            return 'Invalid date';
         }
     };
 

@@ -15,44 +15,6 @@ import { Match } from '../types/match';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 
-interface Player {
-  name: string;
-  _id: string;
-}
-
-interface PlayerStats {
-  totalPoints: number;
-  totalInnings: number;
-  safes: number;
-  misses: number;
-  bestRun: number;
-  scratches: number;
-  fouls: number;
-  intentionalFouls: number;
-  breakingFouls: number;
-  currentRun: number;
-  runHistory: number[];
-}
-
-interface Turn {
-  playerNumber: number;
-  playerName: string;
-  ballsPocketed: number;
-  action: string;
-  timestamp: Date;
-  score: number;
-  inning: number;
-  points: number;
-  isBreak: boolean;
-  isScratch: boolean;
-  isSafetyPlay: boolean;
-  isDefensiveShot: boolean;
-  isFoul: boolean;
-  isBreakingFoul: boolean;
-  isIntentionalFoul: boolean;
-  isMiss: boolean;
-}
-
 interface MatchCardProps {
   match: Match;
   isDarkMode: boolean;

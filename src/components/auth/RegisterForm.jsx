@@ -5,7 +5,6 @@ import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useEle
 
 export default function RegisterForm({ onClose }) {
   const [step, setStep] = useState('payment');
-  const [isMonthly, setIsMonthly] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -55,7 +54,7 @@ export default function RegisterForm({ onClose }) {
         throw new Error('Stripe not initialized');
       }
 
-      const clientSecret = await createPaymentIntent(isMonthly);
+      const clientSecret = await createPaymentIntent();
       
       // Get the card elements
       const cardNumber = elements.getElement(CardNumberElement);

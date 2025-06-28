@@ -4,19 +4,12 @@ import LoginForm from '../components/auth/LoginForm';
 import RegisterForm from '../components/auth/RegisterForm';
 import { useAuth } from '../context/AuthContext.tsx';
 import LivePreview from '../components/LivePreview';
-import Pricing from '../components/Pricing';
 
 export default function LandingPage() {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [authMode, setAuthMode] = useState('login');
     const [selectedPlan, setSelectedPlan] = useState(null);
     const { user, logout } = useAuth();
-
-    const handlePlanSelect = (plan) => {
-        setSelectedPlan(plan);
-        setAuthMode('register');
-        setShowAuthModal(true);
-    };
 
     const handleCloseModal = () => {
         setShowAuthModal(false);
