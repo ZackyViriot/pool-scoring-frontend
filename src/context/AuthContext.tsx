@@ -82,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ email, password, name, paymentIntentId }),
       });
 
