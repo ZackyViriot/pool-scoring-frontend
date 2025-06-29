@@ -132,7 +132,8 @@ export default function History() {
       const response = await axios.get(`${API_BASE_URL}/matches`, {
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
+        withCredentials: true
       });
       // Ensure response.data is an array
       setMatches(Array.isArray(response.data) ? response.data : []);

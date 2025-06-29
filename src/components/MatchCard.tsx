@@ -73,7 +73,8 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, isDarkMode, onClick
       await axios.delete(`${getApiUrl()}/matches/${match._id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
+        withCredentials: true
       });
       setShowDeleteConfirm(false);
       if (onDelete) {
