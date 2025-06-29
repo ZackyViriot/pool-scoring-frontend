@@ -56,7 +56,7 @@ const formatTimeOnly = (dateString: string | Date): string => {
 const getApiUrl = () => {
   if (typeof window !== 'undefined') {
     return window.location.hostname === 'localhost' 
-      ? 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io'
+      ? 'http://localhost:8000'
       : 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
   }
   return 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';

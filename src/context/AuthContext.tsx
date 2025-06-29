@@ -16,8 +16,16 @@ export interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Define API URL based on environment
-const API_URL = 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.hostname === 'localhost' 
+      ? 'http://localhost:8000'
+      : 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+  }
+  return 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+};
+
+const API_URL = getApiUrl();
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

@@ -3,7 +3,16 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 
 // Define API URL based on environment
-const API_URL = 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.hostname === 'localhost' 
+      ? 'http://localhost:8000'
+      : 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+  }
+  return 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+};
+
+const API_URL = getApiUrl();
 
 // Use the publishable key directly for now
 const STRIPE_PUBLISHABLE_KEY = 'pk_live_51QRPF6GDlcFzOwRVEJvLkMMRszuqwYRWbkkWohm4sMriIscHDCSIy3bbjzjs8Ru0Lcn5zr73r7jRET97blOySnfj000SweidEo';
