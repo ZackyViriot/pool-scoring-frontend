@@ -18,9 +18,13 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 const getApiUrl = () => {
   if (typeof window !== 'undefined') {
-    return window.location.hostname === 'localhost' 
-      ? 'http://localhost:8000'
-      : 'https://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+    // Check if we're on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:8000';
+    }
+    
+    // Production - use HTTPS
+    return 'https://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
   }
   return 'https://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
 };
