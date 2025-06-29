@@ -24,9 +24,9 @@ const getApiUrl = () => {
     }
     
     // Production - use HTTPS
-    return 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+    return 'https://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
   }
-  return 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+  return 'https://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
 };
 
 const API_URL = getApiUrl();
