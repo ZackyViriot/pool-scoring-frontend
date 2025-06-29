@@ -3,9 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 
 // Define API URL based on environment
-const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io'
-  : 'http://localhost:8000';
+const API_URL = 'http://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
 
 // Use the publishable key directly for now
 const STRIPE_PUBLISHABLE_KEY = 'pk_live_51QRPF6GDlcFzOwRVEJvLkMMRszuqwYRWbkkWohm4sMriIscHDCSIy3bbjzjs8Ru0Lcn5zr73r7jRET97blOySnfj000SweidEo';
@@ -44,7 +42,7 @@ export const StripeProvider = ({ children }) => {
         throw new Error('Stripe is not initialized yet. Please try again.');
       }
 
-      const response = await fetch(`${API_BASE_URL}/payment/create-payment-intent`, {
+      const response = await fetch(`${API_URL}/payment/create-payment-intent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
