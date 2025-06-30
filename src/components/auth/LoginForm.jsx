@@ -52,6 +52,7 @@ export default function LoginForm({ onClose }) {
             className="w-full p-2 rounded bg-black/30 border border-gray-700 focus:border-blue-500 focus:outline-none"
             required
           />
+          <p className="text-xs text-gray-400 mt-1">Email is not case sensitive</p>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Password</label>
