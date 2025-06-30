@@ -24,9 +24,9 @@ const getApiUrl = () => {
     }
     
     // Production - use HTTPS
-    return 'https://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+    return 'https://poolscoringbackend.org';
   }
-  return 'https://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+  return 'https://poolscoringbackend.org';
 };
 
 const API_URL = getApiUrl();

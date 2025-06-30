@@ -57,9 +57,9 @@ const getApiUrl = () => {
   if (typeof window !== 'undefined') {
     return window.location.hostname === 'localhost' 
       ? 'http://localhost:8000'
-      : 'https://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+      : 'https://poolscoringbackend.org';
   }
-  return 'https://b0cwgosscocoskkggsgs804w.85.31.224.91.sslip.io';
+  return 'https://poolscoringbackend.org';
 };
 
 export const MatchCard: React.FC<MatchCardProps> = ({ match, isDarkMode, onClick, onDelete }) => {
