@@ -46,6 +46,7 @@ export default function PoolScoringComponent() {
     const [showBreakFoulModal, setShowBreakFoulModal] = useState(false);
     const [breakFoulPlayer, setBreakFoulPlayer] = useState(null);
     const [showWinModal, setShowWinModal] = useState(false);
+    const [showPlayerStats, setShowPlayerStats] = useState(null);
     const [winner, setWinner] = useState(null);
     const [showGameStats, setShowGameStats] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -720,12 +721,14 @@ export default function PoolScoringComponent() {
         setShowWinModal(false);
         setShowGameStats(false);
         setWinner(null);
+        setShowPlayerStats(null);
     };
 
     const startNewGame = () => {
         setShowWinModal(false);
         setShowGameStats(false);
         setWinner(null);
+        setShowPlayerStats(null);
         endGame();
     };
 
@@ -789,8 +792,25 @@ export default function PoolScoringComponent() {
                     });
                 }
                 
-                // Track scoring runs
-                if (turn.action === 'Points' || turn.action === 'Finish Rack') {
+                // Track scratches
+                if (turn.action === 'Scratch') {
+                    acc.scratchDetails.push({
+                        inning: turn.inning,
+                        timestamp: turn.timestamp
+                    });
+                }
+                
+                // Track finish racks separately
+                if (turn.action === 'Finish Rack') {
+                    acc.finishRackDetails.push({
+                        inning: turn.inning,
+                        points: turn.points,
+                        timestamp: turn.timestamp
+                    });
+                }
+                
+                // Track regular scoring runs (excluding finish racks)
+                if (turn.action === 'Points') {
                     acc.runDetails.push({
                         inning: turn.inning,
                         points: turn.points,
@@ -803,6 +823,8 @@ export default function PoolScoringComponent() {
             foulDetails: [],
             safeDetails: [],
             missDetails: [],
+            scratchDetails: [],
+            finishRackDetails: [],
             runDetails: []
         });
 
@@ -810,6 +832,8 @@ export default function PoolScoringComponent() {
         const totalFouls = details.foulDetails.length;
         const totalSafes = details.safeDetails.length;
         const totalMisses = details.missDetails.length;
+        const totalScratches = details.scratchDetails.length;
+        const totalFinishRacks = details.finishRackDetails.length;
         const bestRun = Math.max(...details.runDetails.map(run => run.points), 0);
 
         return {
@@ -819,6 +843,8 @@ export default function PoolScoringComponent() {
             totalFouls: totalFouls,
             totalSafes: totalSafes,
             totalMisses: totalMisses,
+            totalScratches: totalScratches,
+            totalFinishRacks: totalFinishRacks,
             ...details
         };
     };
@@ -1702,70 +1728,108 @@ export default function PoolScoringComponent() {
                             
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-bold">Game History</h2>
-                                <button
-                                    onClick={() => setShowHistoryModal(false)}
-                                    className="p-2 rounded-full hover:bg-gray-700/50"
-                                >
-                                    ✕
-                                </button>
+                                <div className="flex gap-2">
+                                    {winner && (
+                                        <button
+                                            onClick={() => {
+                                                setShowHistoryModal(false);
+                                                setShowPlayerStats(1);
+                                            }}
+                                            className="px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 
+                                                text-blue-300 rounded-full transition-colors text-sm"
+                                        >
+                                            {player1.name || 'Player 1'} Stats
+                                        </button>
+                                    )}
+                                    {winner && (
+                                        <button
+                                            onClick={() => {
+                                                setShowHistoryModal(false);
+                                                setShowPlayerStats(2);
+                                            }}
+                                            className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 
+                                                text-orange-300 rounded-full transition-colors text-sm"
+                                        >
+                                            {player2.name || 'Player 2'} Stats
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setShowHistoryModal(false)}
+                                        className="p-2 rounded-full hover:bg-gray-700/50"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="overflow-y-auto max-h-[60vh] pr-2 space-y-2">
-                                {turnHistory.map((turn, index) => {
-                                    let timeString;
-                                    try {
-                                        // Ensure timestamp is a valid date
-                                        const timestamp = turn.timestamp ? new Date(turn.timestamp) : new Date();
-                                        if (isNaN(timestamp.getTime())) {
-                                            // If invalid date, use current time
-                                            timeString = format(new Date(), 'h:mm a');
-                                        } else {
-                                            timeString = format(timestamp, 'h:mm a');
+                                {(() => {
+                                    // Group turns by inning and player
+                                    const inningGroups = {};
+                                    turnHistory.forEach((turn) => {
+                                        const key = `${turn.inning}-${turn.playerNum}`;
+                                        if (!inningGroups[key]) {
+                                            inningGroups[key] = {
+                                                inning: turn.inning,
+                                                playerNum: turn.playerNum,
+                                                playerName: turn.playerName,
+                                                netPoints: 0,
+                                                timestamp: turn.timestamp
+                                            };
                                         }
-                                    } catch (error) {
-                                        // Fallback to current time if any error occurs
-                                        console.warn('Error formatting turn timestamp:', error);
-                                        timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                    }
-                                    
-                                    return (
-                                        <div key={index} 
-                                            className={`p-2 rounded-lg flex items-center justify-between
-                                                ${isDarkMode ? 'bg-black/30' : 'bg-gray-100'}
-                                                ${turn.playerNum === 1 
-                                                    ? 'border-l-4 border-blue-500' 
-                                                    : 'border-l-4 border-orange-500'}`}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <span className={`font-medium ${
-                                                    turn.playerNum === 1 ? 'text-blue-400' : 'text-orange-400'
-                                                }`}>
-                                                    {turn.playerName}
-                                                </span>
-                                                <span className="opacity-75">
-                                                    Inning {turn.inning}
-                                                </span>
+                                        inningGroups[key].netPoints += turn.points || 0;
+                                    });
+
+                                    // Convert to array and sort by inning
+                                    const sortedInnings = Object.values(inningGroups).sort((a, b) => a.inning - b.inning);
+
+                                    return sortedInnings.map((inning, index) => {
+                                        let timeString;
+                                        try {
+                                            const timestamp = inning.timestamp ? new Date(inning.timestamp) : new Date();
+                                            if (isNaN(timestamp.getTime())) {
+                                                timeString = format(new Date(), 'h:mm a');
+                                            } else {
+                                                timeString = format(timestamp, 'h:mm a');
+                                            }
+                                        } catch (error) {
+                                            console.warn('Error formatting inning timestamp:', error);
+                                            timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                        }
+                                        
+                                        return (
+                                            <div key={index} 
+                                                className={`p-3 rounded-lg flex items-center justify-between
+                                                    ${isDarkMode ? 'bg-black/30' : 'bg-gray-100'}
+                                                    ${inning.playerNum === 1 
+                                                        ? 'border-l-4 border-blue-500' 
+                                                        : 'border-l-4 border-orange-500'}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <span className={`font-medium ${
+                                                        inning.playerNum === 1 ? 'text-blue-400' : 'text-orange-400'
+                                                    }`}>
+                                                        {inning.playerName}
+                                                    </span>
+                                                    <span className="opacity-75 font-semibold">
+                                                        Inning {inning.inning}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`text-2xl font-bold ${
+                                                        inning.netPoints > 0 ? 'text-green-400' :
+                                                        inning.netPoints < 0 ? 'text-red-400' : 'text-gray-400'
+                                                    }`}>
+                                                        {inning.netPoints > 0 ? '+' : ''}{inning.netPoints}
+                                                    </div>
+                                                    <span className="text-sm opacity-60">
+                                                        {timeString}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-4">
-                                                <span className={`${
-                                                    turn.action === 'Miss' ? 'text-red-400' :
-                                                    turn.points > 0 ? 'text-green-400' :
-                                                    turn.points < 0 ? 'text-red-400' : ''
-                                                }`}>
-                                                    {turn.action}
-                                                    {turn.points !== undefined && turn.points !== 0 && (
-                                                        <span className={turn.points > 0 ? 'text-green-400' : 'text-red-400'}>
-                                                            {' '}({turn.points > 0 ? '+' : ''}{turn.points})
-                                                        </span>
-                                                    )}
-                                                </span>
-                                                <span className="text-sm opacity-60">
-                                                    {timeString}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    });
+                                })()}
                             </div>
                         </div>
                     </div>
@@ -1813,23 +1877,43 @@ export default function PoolScoringComponent() {
                                     </button>
                                 </div>
 
-                                <p className="text-2xl font-medium text-center mb-6">
-                                    Winner: {winner === 1 ? player1.name || 'Player 1' : player2.name || 'Player 2'}
-                                </p>
+                                {/* Final Score Display */}
+                                <div className="text-center mb-6">
+                                    <p className="text-2xl font-medium mb-2">
+                                        Winner: {winner === 1 ? player1.name || 'Player 1' : player2.name || 'Player 2'}
+                                    </p>
+                                    <div className="flex justify-center items-center gap-8 text-3xl font-bold mb-4">
+                                        <div className={`${winner === 1 ? 'text-green-400' : 'text-gray-400'}`}>
+                                            {player1.name || 'Player 1'}: {player1.score}
+                                        </div>
+                                        <div className="text-2xl opacity-60">vs</div>
+                                        <div className={`${winner === 2 ? 'text-green-400' : 'text-gray-400'}`}>
+                                            {player2.name || 'Player 2'}: {player2.score}
+                                        </div>
+                                    </div>
+                                    <div className="text-sm opacity-60">
+                                        Game ended in {currentInning - 1} innings • {formatTime(gameTime)}
+                                    </div>
+                                </div>
 
-                                <div className="grid grid-cols-2 gap-6">
+                                {/* Player Stats Buttons */}
+                                <div className="grid grid-cols-2 gap-6 mb-6">
                                     {[1, 2].map(playerNum => {
                                         const stats = generateDetailedStats(playerNum);
                                         return (
-                                            <div key={playerNum} className={`space-y-4 p-4 rounded-lg
-                                                ${isDarkMode ? 'bg-black/30' : 'bg-gray-100'}`}>
-                                                <h3 className={`text-xl font-bold ${
+                                            <button
+                                                key={playerNum}
+                                                onClick={() => setShowPlayerStats(playerNum)}
+                                                className={`p-6 rounded-lg text-left transition-all hover:scale-105
+                                                    ${isDarkMode ? 'bg-black/30 hover:bg-black/50' : 'bg-gray-100 hover:bg-gray-200'}
+                                                    ${winner === playerNum ? 'ring-2 ring-green-500/50' : ''}`}
+                                            >
+                                                <h3 className={`text-xl font-bold mb-2 ${
                                                     playerNum === 1 ? 'text-blue-400' : 'text-orange-400'
                                                 }`}>
-                                                    {stats.name}
+                                                    {stats.name} {winner === playerNum && '🏆'}
                                                 </h3>
-                                                
-                                                <div className="grid grid-cols-2 gap-2 mb-4">
+                                                <div className="grid grid-cols-3 gap-2">
                                                     <div className="bg-black/20 rounded p-2">
                                                         <div className="text-2xl font-bold">{stats.totalScore}</div>
                                                         <div className="text-xs opacity-60">Final Score</div>
@@ -1838,65 +1922,26 @@ export default function PoolScoringComponent() {
                                                         <div className="text-2xl font-bold">{stats.bestRun}</div>
                                                         <div className="text-xs opacity-60">Best Run</div>
                                                     </div>
-                                                </div>
-
-                                                <div className="space-y-4">
-                                                    {/* Fouls Section */}
-                                                    <div>
-                                                        <h4 className="font-medium mb-2">Fouls ({stats.totalFouls || 0})</h4>
-                                                        <div className="space-y-1">
-                                                            {(stats.foulDetails || []).map((foul, idx) => (
-                                                                <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
-                                                                    <span>Inning {foul.inning}</span>
-                                                                    <span className="text-red-400">{foul.type} ({foul.points})</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Safes Section */}
-                                                    <div>
-                                                        <h4 className="font-medium mb-2">Safes ({stats.totalSafes || 0})</h4>
-                                                        <div className="space-y-1">
-                                                            {(stats.safeDetails || []).map((safe, idx) => (
-                                                                <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
-                                                                    <span>Inning {safe.inning}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Misses Section */}
-                                                    <div>
-                                                        <h4 className="font-medium mb-2">Misses ({stats.totalMisses || 0})</h4>
-                                                        <div className="space-y-1">
-                                                            {(stats.missDetails || []).map((miss, idx) => (
-                                                                <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
-                                                                    <span>Inning {miss.inning}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Runs Section */}
-                                                    <div>
-                                                        <h4 className="font-medium mb-2">Scoring Runs</h4>
-                                                        <div className="space-y-1">
-                                                            {(stats.runDetails || []).map((run, idx) => (
-                                                                <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
-                                                                    <span>Inning {run.inning}</span>
-                                                                    <span className="text-green-400">+{run.points}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
+                                                    <div className="bg-black/20 rounded p-2">
+                                                        <div className="text-2xl font-bold">{(() => {
+                                                            const playerInnings = new Set();
+                                                            turnHistory.forEach(turn => {
+                                                                if (turn.playerNum === playerNum) {
+                                                                    playerInnings.add(turn.inning);
+                                                                }
+                                                            });
+                                                            return playerInnings.size;
+                                                        })()}</div>
+                                                        <div className="text-xs opacity-60">Innings</div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                                <p className="text-sm opacity-60 mt-2">Click to view detailed stats</p>
+                                            </button>
                                         );
                                     })}
                                 </div>
 
-                                <div className="text-center mt-6 space-x-4">
+                                <div className="text-center space-x-4">
                                     <p className="opacity-60 mb-2">Game Time: {formatTime(gameTime)}</p>
                                     <button
                                         onClick={startNewGame}
@@ -1916,6 +1961,262 @@ export default function PoolScoringComponent() {
                             </div>
                         </div>
                     </>
+                )}
+
+                {/* Individual Player Stats Modal */}
+                {showPlayerStats && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm 
+                        flex items-center justify-center z-50">
+                        <div className={`rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto
+                            shadow-2xl animate-fadeIn transition-colors duration-200
+                            ${isDarkMode 
+                                ? 'bg-gradient-to-b from-gray-800 to-gray-900 border border-white/10' 
+                                : 'bg-gradient-to-b from-white to-gray-50 border border-gray-200'}`}>
+                            
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-2xl font-bold">
+                                    {showPlayerStats === 1 ? player1.name || 'Player 1' : player2.name || 'Player 2'} Stats
+                                </h2>
+                                <button
+                                    onClick={() => setShowPlayerStats(null)}
+                                    className="p-2 rounded-full hover:bg-gray-700/50"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            {(() => {
+                                const stats = generateDetailedStats(showPlayerStats);
+                                const playerInnings = new Set();
+                                turnHistory.forEach(turn => {
+                                    if (turn.playerNum === showPlayerStats) {
+                                        playerInnings.add(turn.inning);
+                                    }
+                                });
+                                const totalInnings = playerInnings.size;
+                                
+                                return (
+                                    <div className="space-y-6">
+                                        {/* Player Summary */}
+                                        <div className={`p-4 rounded-lg ${
+                                            showPlayerStats === 1 ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-orange-500/10 border border-orange-500/20'
+                                        }`}>
+                                            <h3 className={`text-lg font-bold mb-2 ${
+                                                showPlayerStats === 1 ? 'text-blue-400' : 'text-orange-400'
+                                            }`}>
+                                                {stats.name} Summary
+                                            </h3>
+                                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                                <div>
+                                                    <span className="opacity-60">Final Score:</span>
+                                                    <span className="ml-2 font-bold">{stats.totalScore}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="opacity-60">Total Innings:</span>
+                                                    <span className="ml-2 font-bold">{totalInnings}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="opacity-60">Best Run:</span>
+                                                    <span className="ml-2 font-bold">{stats.bestRun}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="opacity-60">Avg per Inning:</span>
+                                                    <span className="ml-2 font-bold">
+                                                        {totalInnings > 0 ? (stats.totalScore / totalInnings).toFixed(1) : '0.0'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {/* Key Stats Grid */}
+                                        <div className="grid grid-cols-4 gap-3">
+                                            <div className="bg-black/20 rounded p-3 text-center">
+                                                <div className="text-2xl font-bold">{stats.totalScore}</div>
+                                                <div className="text-xs opacity-60">Final Score</div>
+                                            </div>
+                                            <div className="bg-black/20 rounded p-3 text-center">
+                                                <div className="text-2xl font-bold">{stats.bestRun}</div>
+                                                <div className="text-xs opacity-60">Best Run</div>
+                                            </div>
+                                            <div className="bg-black/20 rounded p-3 text-center">
+                                                <div className="text-2xl font-bold">{totalInnings}</div>
+                                                <div className="text-xs opacity-60">Total Innings</div>
+                                            </div>
+                                            <div className="bg-black/20 rounded p-3 text-center">
+                                                <div className="text-2xl font-bold">{totalInnings > 0 ? (stats.totalScore / totalInnings).toFixed(1) : '0.0'}</div>
+                                                <div className="text-xs opacity-60">Avg/Inning</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Game Stats Summary */}
+                                        <div className="grid grid-cols-4 gap-3">
+                                            <div className="bg-green-500/10 rounded p-2 text-center">
+                                                <div className="text-lg font-bold text-green-400">{stats.totalSafes || 0}</div>
+                                                <div className="text-xs opacity-60">Safes</div>
+                                            </div>
+                                            <div className="bg-red-500/10 rounded p-2 text-center">
+                                                <div className="text-lg font-bold text-red-400">{stats.totalMisses || 0}</div>
+                                                <div className="text-xs opacity-60">Misses</div>
+                                            </div>
+                                            <div className="bg-orange-500/10 rounded p-2 text-center">
+                                                <div className="text-lg font-bold text-orange-400">{stats.totalScratches || 0}</div>
+                                                <div className="text-xs opacity-60">Scratches</div>
+                                            </div>
+                                            <div className="bg-red-500/10 rounded p-2 text-center">
+                                                <div className="text-lg font-bold text-red-400">{stats.totalFouls || 0}</div>
+                                                <div className="text-xs opacity-60">Fouls</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Foul Types Breakdown */}
+                                        <div className="grid grid-cols-3 gap-3">
+                                            <div className="bg-yellow-500/10 rounded p-2 text-center">
+                                                <div className="text-lg font-bold text-yellow-400">
+                                                    {(stats.foulDetails || []).filter(f => f.type.includes('Break')).length}
+                                                </div>
+                                                <div className="text-xs opacity-60">Break Fouls</div>
+                                            </div>
+                                            <div className="bg-purple-500/10 rounded p-2 text-center">
+                                                <div className="text-lg font-bold text-purple-400">
+                                                    {(stats.foulDetails || []).filter(f => f.type.includes('Intentional')).length}
+                                                </div>
+                                                <div className="text-xs opacity-60">Int Fouls</div>
+                                            </div>
+                                            <div className="bg-indigo-500/10 rounded p-2 text-center">
+                                                <div className="text-lg font-bold text-indigo-400">{stats.totalFinishRacks || 0}</div>
+                                                <div className="text-xs opacity-60">Finish Racks</div>
+                                            </div>
+                                        </div>
+
+                                                                                {/* Detailed Stats */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-3">
+                                                <div className="bg-green-500/20 rounded p-3">
+                                                    <h4 className="font-medium text-green-400 mb-2">Safes ({stats.totalSafes || 0})</h4>
+                                                    <div className="space-y-1">
+                                                        {(stats.safeDetails || []).map((safe, idx) => (
+                                                            <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
+                                                                <span>Inning {safe.inning}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-red-500/20 rounded p-3">
+                                                    <h4 className="font-medium text-red-400 mb-2">Misses ({stats.totalMisses || 0})</h4>
+                                                    <div className="space-y-1">
+                                                        {(stats.missDetails || []).map((miss, idx) => (
+                                                            <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
+                                                                <span>Inning {miss.inning}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-blue-500/20 rounded p-3">
+                                                    <h4 className="font-medium text-blue-400 mb-2">Runs</h4>
+                                                    <div className="space-y-1">
+                                                        {(() => {
+                                                            // Group runs by inning
+                                                            const runGroups = {};
+                                                            (stats.runDetails || []).forEach((run) => {
+                                                                if (!runGroups[run.inning]) {
+                                                                    runGroups[run.inning] = 0;
+                                                                }
+                                                                runGroups[run.inning] += run.points;
+                                                            });
+
+                                                            return Object.entries(runGroups).map(([inning, points]) => (
+                                                                <div key={inning} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
+                                                                    <span>Inning {inning}</span>
+                                                                    <span className="text-green-400">+{points}</span>
+                                                                </div>
+                                                            ));
+                                                        })()}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-orange-500/20 rounded p-3">
+                                                    <h4 className="font-medium text-orange-400 mb-2">Scratches</h4>
+                                                    <div className="space-y-1">
+                                                        {(stats.scratchDetails || []).map((scratch, idx) => (
+                                                            <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
+                                                                <span>Inning {scratch.inning}</span>
+                                                                <span className="text-red-400">-1</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <div className="bg-red-500/20 rounded p-3">
+                                                    <h4 className="font-medium text-red-400 mb-2">Fouls ({stats.totalFouls || 0})</h4>
+                                                    <div className="space-y-1">
+                                                        {(stats.foulDetails || []).map((foul, idx) => (
+                                                            <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
+                                                                <span>Inning {foul.inning}</span>
+                                                                <span className="text-red-400">{foul.type} ({foul.points})</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-yellow-500/20 rounded p-3">
+                                                    <h4 className="font-medium text-yellow-400 mb-2">Break Fouls</h4>
+                                                    <div className="space-y-1">
+                                                        {(stats.foulDetails || []).filter(f => f.type.includes('Break')).map((foul, idx) => (
+                                                            <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
+                                                                <span>Inning {foul.inning}</span>
+                                                                <span className="text-red-400">{foul.points}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-purple-500/20 rounded p-3">
+                                                    <h4 className="font-medium text-purple-400 mb-2">Intentional Fouls</h4>
+                                                    <div className="space-y-1">
+                                                        {(stats.foulDetails || []).filter(f => f.type.includes('Intentional')).map((foul, idx) => (
+                                                            <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
+                                                                <span>Inning {foul.inning}</span>
+                                                                <span className="text-red-400">{foul.points}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-indigo-500/20 rounded p-3">
+                                                    <h4 className="font-medium text-indigo-400 mb-2">Finish Racks</h4>
+                                                    <div className="space-y-1">
+                                                        {(stats.finishRackDetails || []).map((finish, idx) => (
+                                                            <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
+                                                                <span>Inning {finish.inning}</span>
+                                                                <span className="text-green-400">+{finish.points}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Action Buttons */}
+                                        <div className="flex justify-center gap-4 pt-4">
+                                            <button
+                                                onClick={() => {
+                                                    setShowPlayerStats(null);
+                                                    setShowHistoryModal(true);
+                                                }}
+                                                className="px-6 py-2 bg-blue-500/20 hover:bg-blue-500/30 
+                                                    text-blue-300 rounded-full transition-colors"
+                                            >
+                                                View Game History
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </div>
                 )}
 
                 {/* Breaking Foul Modal */}
