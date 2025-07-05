@@ -41,18 +41,6 @@ const formatDate = (date: Date | string): string => {
   }
 };
 
-const formatTimeOnly = (dateString: string | Date): string => {
-  try {
-    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    if (isNaN(date.getTime())) {
-      return 'Invalid time';
-    }
-    return format(date, 'h:mm a');
-  } catch (error) {
-    return 'Invalid time';
-  }
-};
-
 const getApiUrl = () => {
   if (typeof window !== 'undefined') {
     return window.location.hostname === 'localhost' 

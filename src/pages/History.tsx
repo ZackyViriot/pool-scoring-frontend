@@ -153,7 +153,6 @@ export default function History() {
         playerInnings.add(turn.inning);
       }
     });
-    const totalInnings = playerInnings.size;
 
     // Process turn history for detailed stats
     const safeDetails: { inning: number }[] = [];

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '../context/AuthContext.tsx';
 
@@ -9,7 +9,6 @@ interface NavbarProps {
 }
 
 export default function Navbar({ isDarkMode, setIsDarkMode }: NavbarProps) {
-  const navigate = useNavigate();
   const { logout } = useAuth();
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
