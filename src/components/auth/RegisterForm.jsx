@@ -113,6 +113,7 @@ export default function RegisterForm({ onClose }) {
       });
 
       if (confirmError) {
+        console.error('Payment confirmation error:', confirmError);
         throw new Error(confirmError.message || 'Payment failed');
       }
 
@@ -127,7 +128,8 @@ export default function RegisterForm({ onClose }) {
         // Register the user with the payment intent
         await register(formData.email, formData.password, formData.name, paymentIntent.id);
       } else {
-        throw new Error('Payment was not successful. Please try again.');
+        console.error('Payment not successful, status:', paymentIntent.status);
+        throw new Error(`Payment was not successful (status: ${paymentIntent.status}). Please try again.`);
       }
       
     } catch (err) {

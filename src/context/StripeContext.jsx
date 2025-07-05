@@ -15,7 +15,7 @@ const getApiUrl = () => {
 const API_URL = getApiUrl();
 
 // Use environment variable for Stripe publishable key
-const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
+const STRIPE_PUBLISHABLE_KEY = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
 
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Using Stripe key from environment:', !!process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
@@ -83,6 +83,8 @@ export const StripeProvider = ({ children }) => {
         throw new Error('Stripe not initialized or payment intent missing');
       }
 
+      console.log('Confirming payment with intent:', paymentIntent);
+      
       const { error, paymentIntent: confirmedIntent } = await stripe.confirmCardPayment(
         paymentIntent,
         {
@@ -91,9 +93,11 @@ export const StripeProvider = ({ children }) => {
       );
 
       if (error) {
+        console.error('Payment confirmation error:', error);
         throw error;
       }
 
+      console.log('Payment confirmed successfully:', confirmedIntent.id);
       return confirmedIntent;
     } catch (error) {
       console.error('Error processing payment:', error);
