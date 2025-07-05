@@ -1035,10 +1035,8 @@ export default function PoolScoringComponent() {
             return;
         }
 
-        if (playerNum === 2) {
-            setCurrentInning(prev => prev + 1);
-        }
-        setActivePlayer(playerNum === 1 ? 2 : 1);
+        // When finishing a rack, the player continues their turn
+        // No turn switching needed
     };
 
     // Update calculatePlayerStats function to properly map frontend stats
