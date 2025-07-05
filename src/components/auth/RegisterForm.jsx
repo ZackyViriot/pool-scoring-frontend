@@ -4,7 +4,6 @@ import { useStripe as useStripeContext } from '../../context/StripeContext';
 import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 export default function RegisterForm({ onClose }) {
-  const [step, setStep] = useState('payment');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -44,7 +43,7 @@ export default function RegisterForm({ onClose }) {
     });
   };
 
-  const handlePayment = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsProcessing(true);
@@ -82,30 +81,13 @@ export default function RegisterForm({ onClose }) {
         throw confirmError;
       }
 
-      setFormData(prev => ({
-        ...prev,
-        paymentIntentId: paymentIntent.id
-      }));
-
-      setStep('details');
-    } catch (err) {
-      setError(err.message || 'Payment failed. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleRegistration = async (e) => {
-    e.preventDefault();
-    setError('');
-    
-    try {
-      if (!formData.paymentIntentId) {
-        throw new Error('Payment information is missing. Please try again.');
-      }
-      await register(formData.email, formData.password, formData.name, formData.paymentIntentId);
+      // Register the user with the payment intent
+      await register(formData.email, formData.password, formData.name, paymentIntent.id);
+      
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -120,9 +102,7 @@ export default function RegisterForm({ onClose }) {
         ×
       </button>
 
-      <h2 className="text-2xl font-bold mb-6 text-center">
-        {step === 'payment' ? 'Payment Information' : 'Create Account'}
-      </h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">Create Account</h2>
 
       {error && (
         <div className="mb-4 p-2 bg-red-500/20 text-red-400 rounded text-center">
@@ -130,9 +110,58 @@ export default function RegisterForm({ onClose }) {
         </div>
       )}
 
-      {step === 'payment' ? (
-        <form onSubmit={handlePayment} className="space-y-4">
-          <div className="p-3 bg-blue-500/20 rounded-lg text-center mb-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Account Creation Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-blue-400 border-b border-blue-500/30 pb-2">
+            Account Information
+          </h3>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Name</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full p-2 rounded bg-black/30 border border-gray-700 focus:border-blue-500 focus:outline-none"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full p-2 rounded bg-black/30 border border-gray-700 focus:border-blue-500 focus:outline-none"
+              required
+            />
+            <p className="text-xs text-gray-400 mt-1">Email is not case sensitive</p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full p-2 rounded bg-black/30 border border-gray-700 focus:border-blue-500 focus:outline-none"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Payment Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-green-400 border-b border-green-500/30 pb-2">
+            Payment Information
+          </h3>
+          
+          <div className="p-3 bg-blue-500/20 rounded-lg text-center">
             <p className="text-blue-300">
               One-time payment: $10
             </p>
@@ -161,60 +190,17 @@ export default function RegisterForm({ onClose }) {
               </div>
             </div>
           </div>
+        </div>
 
-          <button
-            type="submit"
-            disabled={isProcessing}
-            className={`w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 
-              transition-colors ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {isProcessing ? 'Processing...' : 'Pay & Continue'}
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={handleRegistration} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full p-2 rounded bg-black/30 border border-gray-700 focus:border-blue-500 focus:outline-none"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full p-2 rounded bg-black/30 border border-gray-700 focus:border-blue-500 focus:outline-none"
-              required
-            />
-            <p className="text-xs text-gray-400 mt-1">Email is not case sensitive</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full p-2 rounded bg-black/30 border border-gray-700 focus:border-blue-500 focus:outline-none"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            Create Account
-          </button>
-        </form>
-      )}
+        <button
+          type="submit"
+          disabled={isProcessing}
+          className={`w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 
+            transition-colors ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          {isProcessing ? 'Creating Account...' : 'Create Account & Pay'}
+        </button>
+      </form>
     </div>
   );
 } 

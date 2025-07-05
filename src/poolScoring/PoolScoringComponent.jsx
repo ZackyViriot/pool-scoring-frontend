@@ -23,7 +23,7 @@ const getApiUrl = () => {
 
 export default function PoolScoringComponent() {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const [playWinSound] = useSound('/sounds/win.mp3');
 
     // All state hooks moved to the top level
@@ -2296,9 +2296,7 @@ export default function PoolScoringComponent() {
                         <button 
                             type="button"
                             onClick={() => {
-                                localStorage.removeItem('token');
-                                localStorage.removeItem('userId');
-                                navigate('/login');
+                                logout();
                                 setShowMenu(false);
                             }}
                             className={`w-full px-4 py-2 text-left transition-colors flex items-center gap-2 cursor-pointer
