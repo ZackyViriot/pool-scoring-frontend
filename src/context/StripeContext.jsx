@@ -14,11 +14,11 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl();
 
-// Use the publishable key directly for now
-const STRIPE_PUBLISHABLE_KEY = 'pk_live_51QRPF6GDlcFzOwRVEJvLkMMRszuqwYRWbkkWohm4sMriIscHDCSIy3bbjzjs8Ru0Lcn5zr73r7jRET97blOySnfj000SweidEo';
+// Use environment variable for Stripe publishable key
+const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
 
 console.log('Environment:', process.env.NODE_ENV);
-console.log('Using direct Stripe key');
+console.log('Using Stripe key from environment:', !!process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
