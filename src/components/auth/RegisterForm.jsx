@@ -78,8 +78,11 @@ export default function RegisterForm({ onClose }) {
         throw new Error('Stripe not initialized');
       }
 
+      console.log('Starting payment process...');
+
       // Create payment intent
       const clientSecret = await createPaymentIntent();
+      console.log('Payment intent created, client secret received');
       
       // Get the card elements
       const cardNumber = elements.getElement(CardNumberElement);
@@ -89,6 +92,8 @@ export default function RegisterForm({ onClose }) {
       if (!cardNumber || !cardExpiry || !cardCvc) {
         throw new Error('Please fill in all card details');
       }
+
+      console.log('Creating payment method...');
 
       // Create payment method
       const { error: paymentMethodError, paymentMethod } = await stripe.createPaymentMethod({
@@ -100,6 +105,8 @@ export default function RegisterForm({ onClose }) {
         throw new Error(paymentMethodError.message || 'Failed to create payment method');
       }
 
+      console.log('Payment method created, confirming payment...');
+
       // Confirm the payment
       const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: paymentMethod.id,
@@ -110,6 +117,13 @@ export default function RegisterForm({ onClose }) {
       }
 
       if (paymentIntent.status === 'succeeded') {
+        console.log('Payment confirmed successfully:', paymentIntent.id);
+        
+        // Add a small delay to ensure payment is fully processed
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        console.log('Proceeding with user registration...');
+        
         // Register the user with the payment intent
         await register(formData.email, formData.password, formData.name, paymentIntent.id);
       } else {

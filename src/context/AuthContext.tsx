@@ -80,6 +80,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (email: string, password: string, name: string, paymentIntentId: string) => {
     try {
+      console.log('Sending registration request with payment intent:', paymentIntentId);
+      
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -90,12 +92,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email, password, name, paymentIntentId }),
       });
 
+      console.log('Registration response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Registration failed with status:', response.status, 'Error:', errorData);
         throw new Error(errorData.message || 'Registration failed');
       }
 
       const data = await response.json();
+      console.log('Registration successful, logging in user...');
       await login(email, password);
       return data;
     } catch (error) {
