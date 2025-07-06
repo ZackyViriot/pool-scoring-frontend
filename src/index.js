@@ -4,6 +4,14 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// Development cache-busting
+if (process.env.NODE_ENV === 'development') {
+  // Force reload on development to see changes immediately
+  if (module.hot) {
+    module.hot.accept();
+  }
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
