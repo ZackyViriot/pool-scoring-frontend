@@ -84,7 +84,7 @@ export default function LandingPage() {
                             {/* One-time Payment Card */}
                             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-700 hover:border-blue-500/50 transition-colors">
                                 <h3 className="text-lg sm:text-xl font-bold mb-2">One-time Payment</h3>
-                                <div className="text-3xl sm:text-4xl font-bold text-blue-400 mb-3 sm:mb-4">$10</div>
+                                <div className="text-3xl sm:text-4xl font-bold text-blue-400 mb-3 sm:mb-4">$20</div>
                                 <p className="text-gray-300 mb-4 sm:mb-6 text-sm sm:text-base">Lifetime access to all features</p>
                                 <ul className="text-left text-gray-400 mb-4 sm:mb-6 space-y-2 text-sm sm:text-base">
                                     <li className="flex items-center">

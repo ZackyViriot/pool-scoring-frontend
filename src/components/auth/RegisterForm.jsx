@@ -292,7 +292,7 @@ export default function RegisterForm({ onClose }) {
           
           <div className="p-3 bg-blue-500/20 rounded-lg text-center">
             <p className="text-blue-300">
-              One-time payment: $10
+              One-time payment: $20
             </p>
           </div>
 
