@@ -6,7 +6,7 @@ export const useGameState = () => {
     const [activePlayer, setActivePlayer] = useState(1);
     const [targetGoal, setTargetGoal] = useState(125);
     const [currentInning, setCurrentInning] = useState(1);
-    const [breakPlayer, setBreakPlayer] = useState(1);
+    const [breakPlayer, setBreakPlayer] = useState(null);
     const [isBreakShot, setIsBreakShot] = useState(true);
     const [winner, setWinner] = useState(null);
     const [winnerStats, setWinnerStats] = useState(null);
@@ -20,7 +20,7 @@ export const useGameState = () => {
         setObjectBallsOnTable(15);
         setActivePlayer(1);
         setCurrentInning(1);
-        setBreakPlayer(1);
+        setBreakPlayer(null);
         setIsBreakShot(true);
         setWinner(null);
         setWinnerStats(null);
@@ -34,7 +34,8 @@ export const useGameState = () => {
         setGameStarted(true);
         setObjectBallsOnTable(15);
         setCurrentInning(1);
-        setBreakPlayer(1);
+        setActivePlayer(1); // Start with player 1, but break will be assigned on first action
+        setBreakPlayer(null); // Break player will be assigned when first action is taken
         setIsBreakShot(true);
     };
 
