@@ -486,18 +486,12 @@ export default function PoolScoringComponent() {
     const checkThreeFouls = (playerNum) => {
         const foulHistory = playerNum === 1 ? player1FoulHistory : player2FoulHistory;
         const setFoulHistory = playerNum === 1 ? setPlayer1FoulHistory : setPlayer2FoulHistory;
-        // Removed unused player variable
-        const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
 
         // Add current turn to foul history first
         const updatedHistory = [...foulHistory, true];
         
         // Check if player has 3 fouls in their last 3 turns
         if (updatedHistory.length >= 3 && updatedHistory.slice(-3).every(foul => foul)) {
-            setPlayer(prev => ({
-                ...prev,
-                score: prev.score - 16  // Full -16 penalty (includes the current foul)
-            }));
             // Reset foul history after applying penalty
             setFoulHistory([]);
             return true;
@@ -533,10 +527,10 @@ export default function PoolScoringComponent() {
         
         addToTurnHistory(playerNum, 'Foul', -1);
         if (isThreeFoulPenalty) {
-            addToTurnHistory(playerNum, 'Three Foul Penalty', -16);
+            addToTurnHistory(playerNum, 'Three Foul Penalty', -15);
             setPlayer(prev => ({
                 ...prev,
-                score: prev.score - 16
+                score: prev.score - 15
             }));
         }
         
@@ -609,7 +603,16 @@ export default function PoolScoringComponent() {
             totalPoints: prev.totalPoints || 0  // Ensure totalPoints is initialized
         }));
 
+        const isThreeFoulPenalty = checkThreeFouls(playerNum);
+        
         addToTurnHistory(playerNum, 'Scratch', -1);
+        if (isThreeFoulPenalty) {
+            addToTurnHistory(playerNum, 'Three Foul Penalty', -15);
+            setPlayer(prev => ({
+                ...prev,
+                score: prev.score - 15
+            }));
+        }
         
         if (playerNum === 2) {
             setCurrentInning(prev => prev + 1);
@@ -903,10 +906,10 @@ export default function PoolScoringComponent() {
 
         const isThreeFoulPenalty = checkThreeFouls(playerNum);
         if (isThreeFoulPenalty) {
-            addToTurnHistory(playerNum, 'Three Foul Penalty', -16);
+            addToTurnHistory(playerNum, 'Three Foul Penalty', -15);
             setPlayer(prev => ({
                 ...prev,
-                score: prev.score - 16
+                score: prev.score - 15
             }));
         }
         
@@ -945,10 +948,10 @@ export default function PoolScoringComponent() {
 
         const isThreeFoulPenalty = checkThreeFouls(playerNum);
         if (isThreeFoulPenalty) {
-            addToTurnHistory(playerNum, 'Three Foul Penalty', -16);
+            addToTurnHistory(playerNum, 'Three Foul Penalty', -15);
             setPlayer(prev => ({
                 ...prev,
-                score: prev.score - 16
+                score: prev.score - 15
             }));
         }
 
@@ -981,7 +984,7 @@ export default function PoolScoringComponent() {
 
         const isThreeFoulPenalty = checkThreeFouls(playerNum);
         if (isThreeFoulPenalty) {
-            addToTurnHistory(playerNum, 'Three Foul Penalty', -16);
+            addToTurnHistory(playerNum, 'Three Foul Penalty', -15);
         }
 
         setObjectBallsOnTable(15);
@@ -1500,7 +1503,7 @@ export default function PoolScoringComponent() {
                         {hasTwoConsecutiveFouls(1) && (
                             <div className="absolute top-2 left-1/2 transform -translate-x-1/2
                                 bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs animate-pulse">
-                                Warning: Next Foul -16 Points
+                                Warning: Next Foul -15 Points
                             </div>
                         )}
 
@@ -1601,7 +1604,7 @@ export default function PoolScoringComponent() {
                         {hasTwoConsecutiveFouls(2) && (
                             <div className="absolute top-2 left-1/2 transform -translate-x-1/2
                                 bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs animate-pulse">
-                                Warning: Next Foul -16 Points
+                                Warning: Next Foul -15 Points
                             </div>
                         )}
 
