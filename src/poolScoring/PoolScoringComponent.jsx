@@ -830,7 +830,23 @@ export default function PoolScoringComponent() {
         const totalMisses = details.missDetails.length;
         const totalScratches = details.scratchDetails.length;
         const totalFinishRacks = details.finishRackDetails.length;
-        const bestRun = Math.max(...details.runDetails.map(run => run.points), 0);
+        // Calculate best run as cumulative consecutive scoring actions
+        let bestRun = 0;
+        let currentRun = 0;
+        
+        // Sort all turns by timestamp to get chronological order
+        const allTurns = turnHistory.filter(turn => turn.playerNum === playerNum).sort((a, b) => a.timestamp - b.timestamp);
+        
+        for (const turn of allTurns) {
+            if (turn.action === 'Points' || turn.action === 'Finish Rack') {
+                // Add to current run
+                currentRun += turn.points || 0;
+                bestRun = Math.max(bestRun, currentRun);
+            } else if (['Miss', 'Safe', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
+                // End current run
+                currentRun = 0;
+            }
+        }
 
         return {
             name: player.name || `Player ${playerNum}`,
@@ -1563,7 +1579,21 @@ export default function PoolScoringComponent() {
                             <div className="grid grid-cols-4 gap-2">
                                 <StatBox 
                                     label="Best"
-                                    value={player1.bestRun || 0}
+                                    value={(() => {
+                                        // Calculate cumulative best run for player 1
+                                        let bestRun = 0;
+                                        let currentRun = 0;
+                                        const allTurns = turnHistory.filter(turn => turn.playerNum === 1).sort((a, b) => a.timestamp - b.timestamp);
+                                        for (const turn of allTurns) {
+                                            if (turn.action === 'Points' || turn.action === 'Finish Rack') {
+                                                currentRun += turn.points || 0;
+                                                bestRun = Math.max(bestRun, currentRun);
+                                            } else if (['Miss', 'Safe', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
+                                                currentRun = 0;
+                                            }
+                                        }
+                                        return bestRun;
+                                    })()}
                                     onClick={() => handleShowRuns(1)}
                                     color={isDarkMode ? 'text-blue-400' : 'text-blue-600'}
                                 />
@@ -1664,7 +1694,21 @@ export default function PoolScoringComponent() {
                             <div className="grid grid-cols-4 gap-2">
                                 <StatBox 
                                     label="Best"
-                                    value={player2.bestRun || 0}
+                                    value={(() => {
+                                        // Calculate cumulative best run for player 2
+                                        let bestRun = 0;
+                                        let currentRun = 0;
+                                        const allTurns = turnHistory.filter(turn => turn.playerNum === 2).sort((a, b) => a.timestamp - b.timestamp);
+                                        for (const turn of allTurns) {
+                                            if (turn.action === 'Points' || turn.action === 'Finish Rack') {
+                                                currentRun += turn.points || 0;
+                                                bestRun = Math.max(bestRun, currentRun);
+                                            } else if (['Miss', 'Safe', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
+                                                currentRun = 0;
+                                            }
+                                        }
+                                        return bestRun;
+                                    })()}
                                     onClick={() => handleShowRuns(2)}
                                     color={isDarkMode ? 'text-orange-400' : 'text-orange-600'}
                                 />
@@ -2112,19 +2156,51 @@ export default function PoolScoringComponent() {
                                                     <h4 className="font-medium text-blue-400 mb-2">Runs</h4>
                                                     <div className="space-y-1">
                                                         {(() => {
-                                                            // Group runs by inning
-                                                            const runGroups = {};
-                                                            (stats.runDetails || []).forEach((run) => {
-                                                                if (!runGroups[run.inning]) {
-                                                                    runGroups[run.inning] = 0;
+                                                            // Show cumulative runs instead of per-inning
+                                                            const runs = [];
+                                                            let currentRun = 0;
+                                                            let runStart = null;
+                                                            
+                                                            // Sort all turns by timestamp to get chronological order
+                                                            const allTurns = (showPlayerStats === 1 ? player1.turnHistory : player2.turnHistory) || [];
+                                                            const sortedTurns = [...allTurns].sort((a, b) => a.timestamp - b.timestamp);
+                                                            
+                                                            for (const turn of sortedTurns) {
+                                                                if (turn.action === 'Points' || turn.action === 'Finish Rack') {
+                                                                    if (currentRun === 0) {
+                                                                        runStart = turn.inning;
+                                                                    }
+                                                                    currentRun += turn.points || 0;
+                                                                } else if (['Miss', 'Safe', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
+                                                                    if (currentRun > 0) {
+                                                                        runs.push({
+                                                                            start: runStart,
+                                                                            end: turn.inning - 1,
+                                                                            points: currentRun
+                                                                        });
+                                                                    }
+                                                                    currentRun = 0;
+                                                                    runStart = null;
                                                                 }
-                                                                runGroups[run.inning] += run.points;
-                                                            });
+                                                            }
+                                                            
+                                                            // Add final run if game ended during a run
+                                                            if (currentRun > 0) {
+                                                                runs.push({
+                                                                    start: runStart,
+                                                                    end: currentInning,
+                                                                    points: currentRun
+                                                                });
+                                                            }
 
-                                                            return Object.entries(runGroups).map(([inning, points]) => (
-                                                                <div key={inning} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
-                                                                    <span>Inning {inning}</span>
-                                                                    <span className="text-green-400">+{points}</span>
+                                                            return runs.map((run, idx) => (
+                                                                <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
+                                                                    <span>
+                                                                        {run.start === run.end 
+                                                                            ? `Inning ${run.start}` 
+                                                                            : `Innings ${run.start}-${run.end}`}
+                                                                    </span>
+                                                                    <span className="text-green-400">+{run.points}</span>
                                                                 </div>
                                                             ));
                                                         })()}
