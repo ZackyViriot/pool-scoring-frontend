@@ -504,11 +504,6 @@ export default function PoolScoringComponent() {
         }
     };
 
-    // Add this function to check for 2 consecutive fouls
-    const hasTwoConsecutiveFouls = (playerNum) => {
-        const foulHistory = playerNum === 1 ? player1FoulHistory : player2FoulHistory;
-        return foulHistory.length === 2 && foulHistory.every(foul => foul);
-    };
 
     // Function to handle acknowledgment of consecutive fouls warning
     const handleConsecutiveFoulsAcknowledged = () => {
