@@ -510,16 +510,6 @@ export default function PoolScoringComponent() {
         return foulHistory.length === 2 && foulHistory.every(foul => foul);
     };
 
-    // Function to show consecutive fouls warning modal
-    const showConsecutiveFoulsWarning = (playerNum) => {
-        if (hasTwoConsecutiveFouls(playerNum)) {
-            setConsecutiveFoulsPlayer(playerNum);
-            setShowConsecutiveFoulsModal(true);
-            return true;
-        }
-        return false;
-    };
-
     // Function to handle acknowledgment of consecutive fouls warning
     const handleConsecutiveFoulsAcknowledged = () => {
         setShowConsecutiveFoulsModal(false);
