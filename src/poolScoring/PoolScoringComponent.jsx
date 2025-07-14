@@ -100,6 +100,8 @@ export default function PoolScoringComponent() {
     const [gameType] = useState(() => getSavedGameProperty('gameType', 'Straight Pool'));
     const [showRunsModal, setShowRunsModal] = useState(false);
     const [selectedPlayer, setSelectedPlayer] = useState(null);
+    const [showConsecutiveFoulsModal, setShowConsecutiveFoulsModal] = useState(false);
+    const [consecutiveFoulsPlayer, setConsecutiveFoulsPlayer] = useState(null);
     
     // Ref for debounced save function
     const saveGameStateRef = useRef();
@@ -508,8 +510,33 @@ export default function PoolScoringComponent() {
         return foulHistory.length === 2 && foulHistory.every(foul => foul);
     };
 
+    // Function to show consecutive fouls warning modal
+    const showConsecutiveFoulsWarning = (playerNum) => {
+        if (hasTwoConsecutiveFouls(playerNum)) {
+            setConsecutiveFoulsPlayer(playerNum);
+            setShowConsecutiveFoulsModal(true);
+            return true;
+        }
+        return false;
+    };
+
+    // Function to handle acknowledgment of consecutive fouls warning
+    const handleConsecutiveFoulsAcknowledged = () => {
+        setShowConsecutiveFoulsModal(false);
+        setConsecutiveFoulsPlayer(null);
+    };
+
     const handleFoul = (playerNum) => {
         if (playerNum !== activePlayer || !gameStarted) return;
+        
+        // Check for consecutive fouls warning BEFORE recording the foul
+        const foulHistory = playerNum === 1 ? player1FoulHistory : player2FoulHistory;
+        if (foulHistory.length === 1 && foulHistory[0] === true) {
+            // This will be the second consecutive foul
+            setConsecutiveFoulsPlayer(playerNum);
+            setShowConsecutiveFoulsModal(true);
+        }
+        
         saveStateToHistory();
         saveGameState();
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
@@ -589,6 +616,15 @@ export default function PoolScoringComponent() {
 
     const handleScratch = (playerNum) => {
         if (playerNum !== activePlayer || !gameStarted) return;
+        
+        // Check for consecutive fouls warning BEFORE recording the foul
+        const foulHistory = playerNum === 1 ? player1FoulHistory : player2FoulHistory;
+        if (foulHistory.length === 1 && foulHistory[0] === true) {
+            // This will be the second consecutive foul
+            setConsecutiveFoulsPlayer(playerNum);
+            setShowConsecutiveFoulsModal(true);
+        }
+        
         saveStateToHistory();
         saveGameState();
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
@@ -904,6 +940,15 @@ export default function PoolScoringComponent() {
     // Add intentional foul handler
     const handleIntentionalFoul = (playerNum) => {
         if (playerNum !== activePlayer || !gameStarted) return;
+        
+        // Check for consecutive fouls warning BEFORE recording the foul
+        const foulHistory = playerNum === 1 ? player1FoulHistory : player2FoulHistory;
+        if (foulHistory.length === 1 && foulHistory[0] === true) {
+            // This will be the second consecutive foul
+            setConsecutiveFoulsPlayer(playerNum);
+            setShowConsecutiveFoulsModal(true);
+        }
+        
         saveStateToHistory();
         saveGameState();
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
@@ -948,6 +993,14 @@ export default function PoolScoringComponent() {
         const playerNum = breakFoulPlayer;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
         
+        // Check for consecutive fouls warning BEFORE recording the foul
+        const foulHistory = playerNum === 1 ? player1FoulHistory : player2FoulHistory;
+        if (foulHistory.length === 1 && foulHistory[0] === true) {
+            // This will be the second consecutive foul
+            setConsecutiveFoulsPlayer(playerNum);
+            setShowConsecutiveFoulsModal(true);
+        }
+        
         saveGameState();
         
         setPlayer(prev => ({
@@ -984,6 +1037,14 @@ export default function PoolScoringComponent() {
     const handleBreakFoulRebreak = () => {
         const playerNum = breakFoulPlayer;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
+        
+        // Check for consecutive fouls warning BEFORE recording the foul
+        const foulHistory = playerNum === 1 ? player1FoulHistory : player2FoulHistory;
+        if (foulHistory.length === 1 && foulHistory[0] === true) {
+            // This will be the second consecutive foul
+            setConsecutiveFoulsPlayer(playerNum);
+            setShowConsecutiveFoulsModal(true);
+        }
         
         saveGameState();
         
@@ -1515,13 +1576,7 @@ export default function PoolScoringComponent() {
                         ${activePlayer === 1 ? 'ring-2 ring-blue-500/50 animate-pulse' : 'opacity-50'}
                         ${activePlayer !== 1 && gameStarted ? 'pointer-events-none' : ''}`}>
                         
-                        {/* Warning for 2 consecutive fouls */}
-                        {hasTwoConsecutiveFouls(1) && (
-                            <div className="absolute top-2 left-1/2 transform -translate-x-1/2
-                                bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs animate-pulse">
-                                Warning: Next Foul -15 Points
-                            </div>
-                        )}
+
 
                         <div className="text-center flex-grow flex flex-col justify-center">
                             {activePlayer === 1 && gameStarted && (
@@ -1630,13 +1685,7 @@ export default function PoolScoringComponent() {
                         ${activePlayer === 2 ? 'ring-2 ring-orange-500/50 animate-pulse' : 'opacity-50'}
                         ${activePlayer !== 2 && gameStarted ? 'pointer-events-none' : ''}`}>
                         
-                        {/* Warning for 2 consecutive fouls */}
-                        {hasTwoConsecutiveFouls(2) && (
-                            <div className="absolute top-2 left-1/2 transform -translate-x-1/2
-                                bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs animate-pulse">
-                                Warning: Next Foul -15 Points
-                            </div>
-                        )}
+
 
                         <div className="text-center flex-grow flex flex-col justify-center">
                             {activePlayer === 2 && gameStarted && (
@@ -2320,6 +2369,43 @@ export default function PoolScoringComponent() {
                                         hover:bg-purple-500/30 transition-colors"
                                 >
                                     Re-Break
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Consecutive Fouls Warning Modal */}
+                {showConsecutiveFoulsModal && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm 
+                        flex items-center justify-center z-50">
+                        <div className={`rounded-xl p-6 w-full max-w-md mx-4
+                            shadow-2xl animate-fadeIn transition-colors duration-200
+                            ${isDarkMode 
+                                ? 'bg-gradient-to-b from-gray-800 to-gray-900 border border-white/10' 
+                                : 'bg-gradient-to-b from-white to-gray-50 border border-gray-200'}`}>
+                            
+                            <div className="text-center">
+                                <div className="text-4xl mb-4">⚠️</div>
+                                <h2 className="text-xl font-bold mb-4 text-red-400">Consecutive Fouls Warning</h2>
+                                <p className="text-center mb-6 opacity-75">
+                                    {consecutiveFoulsPlayer === 1 ? player1.name || 'Player 1' : player2.name || 'Player 2'} has committed 2 consecutive fouls.
+                                </p>
+                                <p className="text-center mb-6 text-red-400 font-semibold">
+                                    The next foul will result in a -15 point penalty!
+                                </p>
+                                <p className="text-center mb-6 text-sm opacity-60">
+                                    Both players must acknowledge this warning to continue.
+                                </p>
+                            </div>
+
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={handleConsecutiveFoulsAcknowledged}
+                                    className="px-6 py-3 rounded-lg bg-red-500/20 text-red-400
+                                        hover:bg-red-500/30 transition-colors font-semibold"
+                                >
+                                    Acknowledge Warning
                                 </button>
                             </div>
                         </div>
