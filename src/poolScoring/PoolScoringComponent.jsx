@@ -893,7 +893,7 @@ export default function PoolScoringComponent() {
             <div className="text-5xl font-bold">
                 {objectBallsOnTable}
             </div>
-            <div className="text-xs opacity-60">
+            <div className="text-sm opacity-60">
                 BOT
             </div>
         </div>
@@ -903,14 +903,14 @@ export default function PoolScoringComponent() {
     const StatBox = ({ label, value, onClick, color = '', isSmallText = false }) => (
         <button 
             onClick={onClick}
-            className={`bg-black/20 rounded-lg p-3 text-center 
+            className={`bg-black/20 rounded-lg p-6 text-center min-h-[120px] min-w-[120px] 
                 hover:bg-opacity-30 transition-all
                 ${onClick ? 'cursor-pointer hover:scale-105 transform' : 'cursor-default'}`}
         >
-            <div className={`text-4xl font-bold ${color}`}>
+            <div className={`text-6xl font-bold ${color}`}>
                 {value}
             </div>
-            <div className={`font-semibold opacity-75 ${isSmallText ? 'text-xs' : 'text-base'}`}>{label}</div>
+            <div className={`font-semibold opacity-75 ${isSmallText ? 'text-base' : 'text-xl'}`}>{label}</div>
         </button>
     );
 
@@ -1394,13 +1394,13 @@ export default function PoolScoringComponent() {
                         ? 'bg-black/30 backdrop-blur-sm border border-white/10' 
                         : 'bg-white/80 backdrop-blur-sm border border-gray-200 shadow-lg'}`}>
                     
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-4">
                         {/* Player 1 Info */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-4">
                             <input
                                 type="text"
                                 placeholder="Player 1"
-                                className={`w-full bg-transparent border-b text-lg font-medium 
+                                className={`w-full bg-transparent border-b text-xl font-medium 
                                     focus:outline-none transition-colors duration-200
                                     ${isDarkMode 
                                         ? 'border-blue-500 focus:border-blue-400' 
@@ -1411,7 +1411,7 @@ export default function PoolScoringComponent() {
                             <input
                                 type="number"
                                 placeholder="HC"
-                                className={`w-16 bg-transparent border-b text-sm text-center
+                                className={`w-20 bg-transparent border-b text-base text-center
                                     focus:outline-none transition-colors duration-200
                                     ${isDarkMode 
                                         ? 'border-blue-500 focus:border-blue-400' 
@@ -1426,7 +1426,7 @@ export default function PoolScoringComponent() {
                             {/* Menu Toggle */}
                             <button
                                 onClick={() => setShowMenu(!showMenu)}
-                                className={`p-2 rounded-lg transition-all duration-200
+                                className={`p-4 rounded-lg transition-all duration-200 min-h-[60px] min-w-[60px]
                                     ${isDarkMode 
                                         ? 'bg-black/30 hover:bg-black/50 border border-white/10' 
                                         : 'bg-white/80 hover:bg-white border border-gray-200'}`}
@@ -1436,7 +1436,7 @@ export default function PoolScoringComponent() {
                                 </svg>
                             </button>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-4">
                                 <input
                                     type="number"
                                     className={`w-20 bg-transparent border-b text-2xl font-bold
@@ -1447,13 +1447,13 @@ export default function PoolScoringComponent() {
                                     value={targetGoal}
                                     onChange={(e) => setTargetGoal(Number(e.target.value))}
                                 />
-                                <div className="text-xs opacity-60">TARGET</div>
+                                <div className="text-sm opacity-60">TARGET</div>
                             </div>
 
                             {/* Theme Toggle */}
                             <button
                                 onClick={() => setIsDarkMode(!isDarkMode)}
-                                className="p-2 rounded-lg transition-all duration-200
+                                className="p-4 rounded-lg transition-all duration-200 min-h-[60px] min-w-[60px]
                                     hover:scale-110 transform shadow-lg
                                     dark:bg-gray-800 bg-white"
                                 aria-label="Toggle theme"
@@ -1471,7 +1471,7 @@ export default function PoolScoringComponent() {
                             <input
                                 type="number"
                                 placeholder="HC"
-                                className={`w-16 bg-transparent border-b text-sm text-center
+                                className={`w-20 bg-transparent border-b text-base text-center
                                     focus:outline-none transition-colors duration-200
                                     ${isDarkMode 
                                         ? 'border-orange-500 focus:border-orange-400' 
@@ -1482,7 +1482,7 @@ export default function PoolScoringComponent() {
                             <input
                                 type="text"
                                 placeholder="Player 2"
-                                className={`w-full bg-transparent border-b text-lg text-right
+                                className={`w-full bg-transparent border-b text-xl text-right
                                     font-medium focus:outline-none transition-colors duration-200
                                     ${isDarkMode 
                                         ? 'border-orange-500 focus:border-orange-400' 
@@ -1494,10 +1494,10 @@ export default function PoolScoringComponent() {
                     </div>
 
                     {/* Game Controls Row */}
-                    <div className="flex justify-center gap-1 mt-1">
+                    <div className="flex justify-center gap-4 mt-2">
                         <button 
                             onClick={gameStarted ? endGame : startGame}
-                            className={`px-3 py-1 rounded-full text-xs
+                            className={`px-8 py-4 rounded-full text-lg font-medium min-h-[60px]
                                 transition-colors duration-200 ${
                                 gameStarted 
                                     ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
@@ -1512,7 +1512,7 @@ export default function PoolScoringComponent() {
                                 {objectBallsOnTable > 1 && (
                                     <button
                                         onClick={() => finishRack(activePlayer)}
-                                        className="px-3 py-1 rounded-full text-xs
+                                        className="px-8 py-4 rounded-full text-lg font-medium min-h-[60px]
                                             bg-green-500/20 text-green-400 hover:bg-green-500/30 
                                             transition-colors duration-200"
                                     >
@@ -1522,7 +1522,7 @@ export default function PoolScoringComponent() {
 
                                 <button 
                                     onClick={switchTurn}
-                                    className="px-3 py-1 rounded-full text-xs
+                                    className="px-8 py-4 rounded-full text-lg font-medium min-h-[60px]
                                         bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 
                                         transition-colors duration-200"
                                 >
@@ -1531,7 +1531,7 @@ export default function PoolScoringComponent() {
 
                                 <button 
                                     onClick={undoLastAction}
-                                    className="px-3 py-1 rounded-full text-xs
+                                    className="px-8 py-4 rounded-full text-lg font-medium min-h-[60px]
                                         bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 
                                         transition-colors duration-200"
                                 >
@@ -1540,7 +1540,7 @@ export default function PoolScoringComponent() {
 
                                 <button 
                                     onClick={() => setShowHistoryModal(true)}
-                                    className="px-3 py-1 rounded-full text-xs
+                                    className="px-8 py-4 rounded-full text-lg font-medium min-h-[60px]
                                         bg-green-500/20 text-green-400 hover:bg-green-500/30 
                                         transition-colors duration-200"
                                 >
@@ -1552,7 +1552,7 @@ export default function PoolScoringComponent() {
                 </div>
 
                 {/* Scoring Section */}
-                <div className="grid grid-cols-2 gap-1 h-[calc(100vh-180px)] relative">
+                <div className="grid grid-cols-2 gap-6 h-[calc(100vh-180px)] relative">
                     {/* Player 1 Score */}
                     <div className={`rounded-lg p-2 transition-colors duration-200 h-full flex flex-col relative
                         ${isDarkMode 
@@ -1576,8 +1576,8 @@ export default function PoolScoringComponent() {
                             <div className="flex justify-center mb-4">
                                 <button 
                                     onClick={() => gameStarted && adjustScore(1, 1)}
-                                    className="text-5xl text-gray-400 hover:text-white 
-                                        w-32 h-32 rounded-full bg-gray-800/50 
+                                    className="text-7xl text-gray-400 hover:text-white 
+                                        w-44 h-44 rounded-full bg-gray-800/50 
                                         flex items-center justify-center transition-colors
                                         hover:scale-105 transform"
                                 >
@@ -1587,9 +1587,9 @@ export default function PoolScoringComponent() {
                         </div>
 
                         {/* Player 1 Stats */}
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-4">
                             {/* Top row - 4 metrics */}
-                            <div className="grid grid-cols-4 gap-2">
+                            <div className="grid grid-cols-4 gap-4">
                                 <StatBox 
                                     label="Safety"
                                     value={player1.safes || 0}
@@ -1616,7 +1616,7 @@ export default function PoolScoringComponent() {
                                 />
                             </div>
                             {/* Bottom row - 4 metrics */}
-                            <div className="grid grid-cols-4 gap-2">
+                            <div className="grid grid-cols-4 gap-4">
                                 <StatBox 
                                     label="Best"
                                     value={(() => {
@@ -1685,8 +1685,8 @@ export default function PoolScoringComponent() {
                             <div className="flex justify-center mb-4">
                                 <button 
                                     onClick={() => gameStarted && adjustScore(2, 1)}
-                                    className="text-5xl text-gray-400 hover:text-white 
-                                        w-32 h-32 rounded-full bg-gray-800/50 
+                                    className="text-7xl text-gray-400 hover:text-white 
+                                        w-44 h-44 rounded-full bg-gray-800/50 
                                         flex items-center justify-center transition-colors
                                         hover:scale-105 transform"
                                 >
@@ -1696,9 +1696,9 @@ export default function PoolScoringComponent() {
                         </div>
 
                         {/* Player 2 Stats */}
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-4">
                             {/* Top row - 4 metrics */}
-                            <div className="grid grid-cols-4 gap-2">
+                            <div className="grid grid-cols-4 gap-4">
                                 <StatBox 
                                     label="Safety"
                                     value={player2.safes || 0}
@@ -1725,7 +1725,7 @@ export default function PoolScoringComponent() {
                                 />
                             </div>
                             {/* Bottom row - 4 metrics */}
-                            <div className="grid grid-cols-4 gap-2">
+                            <div className="grid grid-cols-4 gap-4">
                                 <StatBox 
                                     label="Best"
                                     value={(() => {
@@ -1774,7 +1774,7 @@ export default function PoolScoringComponent() {
                     ${isDarkMode ? 'bg-black/50' : 'bg-white/50'} 
                     backdrop-blur-sm`}>
                     {/* Game Info Row */}
-                    <div className="flex justify-center items-center gap-4 p-1">
+                    <div className="flex justify-center items-center gap-6 p-3">
                         <div>
                             Inning: {currentInning}
                         </div>
@@ -1829,7 +1829,7 @@ export default function PoolScoringComponent() {
                                     )}
                                     <button
                                         onClick={() => setShowHistoryModal(false)}
-                                        className="p-2 rounded-full hover:bg-gray-700/50"
+                                        className="p-4 rounded-full hover:bg-gray-700/50 min-h-[50px] min-w-[50px]"
                                     >
                                         ✕
                                     </button>
@@ -1913,7 +1913,7 @@ export default function PoolScoringComponent() {
                 {winner && !showWinModal && (
                     <button
                         onClick={toggleGameStats}
-                        className="fixed bottom-20 right-4 px-4 py-2 rounded-lg
+                        className="fixed bottom-20 right-4 px-6 py-4 rounded-lg text-lg font-medium min-h-[60px]
                             bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 
                             transition-colors z-50"
                     >
@@ -1945,7 +1945,7 @@ export default function PoolScoringComponent() {
                                     </h2>
                                     <button
                                         onClick={showWinModal ? closeWinModal : toggleGameStats}
-                                        className="p-2 rounded-full hover:bg-gray-700/50"
+                                        className="p-4 rounded-full hover:bg-gray-700/50 min-h-[50px] min-w-[50px]"
                                     >
                                         ✕
                                     </button>
@@ -1987,14 +1987,14 @@ export default function PoolScoringComponent() {
                                                 }`}>
                                                     {stats.name} {winner === playerNum && '🏆'}
                                                 </h3>
-                                                <div className="grid grid-cols-3 gap-2">
+                                                <div className="grid grid-cols-3 gap-4">
                                                     <div className="bg-black/20 rounded p-2">
                                                         <div className="text-2xl font-bold">{stats.totalScore}</div>
-                                                        <div className="text-xs opacity-60">Final Score</div>
+                                                        <div className="text-sm opacity-60">Final Score</div>
                                                     </div>
                                                     <div className="bg-black/20 rounded p-2">
                                                         <div className="text-2xl font-bold">{stats.bestRun}</div>
-                                                        <div className="text-xs opacity-60">Best Run</div>
+                                                        <div className="text-sm opacity-60">Best Run</div>
                                                     </div>
                                                     <div className="bg-black/20 rounded p-2">
                                                         <div className="text-2xl font-bold">{(() => {
@@ -2006,7 +2006,7 @@ export default function PoolScoringComponent() {
                                                             });
                                                             return playerInnings.size;
                                                         })()}</div>
-                                                        <div className="text-xs opacity-60">Innings</div>
+                                                        <div className="text-sm opacity-60">Innings</div>
                                                     </div>
                                                 </div>
                                                 <p className="text-sm opacity-60 mt-2">Click to view detailed stats</p>
@@ -2102,62 +2102,62 @@ export default function PoolScoringComponent() {
                                             </div>
                                         </div>
                                         {/* Key Stats Grid */}
-                                        <div className="grid grid-cols-4 gap-3">
+                                        <div className="grid grid-cols-4 gap-4">
                                             <div className="bg-black/20 rounded p-3 text-center">
                                                 <div className="text-2xl font-bold">{stats.totalScore}</div>
-                                                <div className="text-xs opacity-60">Final Score</div>
+                                                <div className="text-sm opacity-60">Final Score</div>
                                             </div>
                                             <div className="bg-black/20 rounded p-3 text-center">
                                                 <div className="text-2xl font-bold">{stats.bestRun}</div>
-                                                <div className="text-xs opacity-60">Best Run</div>
+                                                <div className="text-sm opacity-60">Best Run</div>
                                             </div>
                                             <div className="bg-black/20 rounded p-3 text-center">
                                                 <div className="text-2xl font-bold">{totalInnings}</div>
-                                                <div className="text-xs opacity-60">Total Innings</div>
+                                                <div className="text-sm opacity-60">Total Innings</div>
                                             </div>
                                             <div className="bg-black/20 rounded p-3 text-center">
                                                 <div className="text-2xl font-bold">{totalInnings > 0 ? (stats.totalScore / totalInnings).toFixed(1) : '0.0'}</div>
-                                                <div className="text-xs opacity-60">Avg/Inning</div>
+                                                <div className="text-sm opacity-60">Avg/Inning</div>
                                             </div>
                                         </div>
 
                                         {/* Game Stats Summary */}
-                                        <div className="grid grid-cols-4 gap-3">
+                                        <div className="grid grid-cols-4 gap-4">
                                             <div className="bg-green-500/10 rounded p-2 text-center">
                                                 <div className="text-lg font-bold text-green-400">{stats.totalSafes || 0}</div>
-                                                <div className="text-xs opacity-60">Safety</div>
+                                                <div className="text-sm opacity-60">Safety</div>
                                             </div>
                                             <div className="bg-red-500/10 rounded p-2 text-center">
                                                 <div className="text-lg font-bold text-red-400">{stats.totalMisses || 0}</div>
-                                                <div className="text-xs opacity-60">Misses</div>
+                                                <div className="text-sm opacity-60">Misses</div>
                                             </div>
                                             <div className="bg-orange-500/10 rounded p-2 text-center">
                                                 <div className="text-lg font-bold text-orange-400">{stats.totalScratches || 0}</div>
-                                                <div className="text-xs opacity-60">Scratches</div>
+                                                <div className="text-sm opacity-60">Scratches</div>
                                             </div>
                                             <div className="bg-red-500/10 rounded p-2 text-center">
                                                 <div className="text-lg font-bold text-red-400">{stats.totalFouls || 0}</div>
-                                                <div className="text-xs opacity-60">Fouls</div>
+                                                <div className="text-sm opacity-60">Fouls</div>
                                             </div>
                                         </div>
 
                                         {/* Foul Types Breakdown */}
-                                        <div className="grid grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-3 gap-4">
                                             <div className="bg-yellow-500/10 rounded p-2 text-center">
                                                 <div className="text-lg font-bold text-yellow-400">
                                                     {(stats.foulDetails || []).filter(f => f.type.includes('Break')).length}
                                                 </div>
-                                                <div className="text-xs opacity-60">Break Fouls</div>
+                                                <div className="text-sm opacity-60">Break Fouls</div>
                                             </div>
                                             <div className="bg-purple-500/10 rounded p-2 text-center">
                                                 <div className="text-lg font-bold text-purple-400">
                                                     {(stats.foulDetails || []).filter(f => f.type.includes('Intentional')).length}
                                                 </div>
-                                                <div className="text-xs opacity-60">Int Fouls</div>
+                                                <div className="text-sm opacity-60">Int Fouls</div>
                                             </div>
                                             <div className="bg-indigo-500/10 rounded p-2 text-center">
                                                 <div className="text-lg font-bold text-indigo-400">{stats.totalFinishRacks || 0}</div>
-                                                <div className="text-xs opacity-60">Finish Racks</div>
+                                                <div className="text-sm opacity-60">Finish Racks</div>
                                             </div>
                                         </div>
 
@@ -2340,7 +2340,7 @@ export default function PoolScoringComponent() {
                                 Would you like to continue playing or re-break?
                             </p>
 
-                            <div className="flex justify-center gap-4">
+                            <div className="flex justify-center gap-6">
                                 <button
                                     onClick={handleBreakFoulContinue}
                                     className="px-4 py-2 rounded-lg bg-blue-500/20 text-blue-400
