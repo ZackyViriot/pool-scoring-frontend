@@ -3,29 +3,29 @@ import React, { useState, useEffect } from 'react';
 // Demo game states to cycle through
 const demoStates = [
     {
-        player1: { score: 0, run: 0, high: 0, safe: 0, miss: 0, active: true },
-        player2: { score: 0, run: 0, high: 0, safe: 0, miss: 0, active: false },
+        player1: { score: 0, run: 0, high: 0, safety: 0, miss: 0, active: true },
+        player2: { score: 0, run: 0, high: 0, safety: 0, miss: 0, active: false },
         balls: 15,
         inning: 1,
         message: "Game Start"
     },
     {
-        player1: { score: 15, run: 15, high: 15, safe: 0, miss: 0, active: true },
-        player2: { score: 0, run: 0, high: 0, safe: 0, miss: 0, active: false },
+        player1: { score: 15, run: 15, high: 15, safety: 0, miss: 0, active: true },
+        player2: { score: 0, run: 0, high: 0, safety: 0, miss: 0, active: false },
         balls: 0,
         inning: 1,
         message: "Player 1 clears the rack!"
     },
     {
-        player1: { score: 15, run: 0, high: 15, safe: 0, miss: 0, active: false },
-        player2: { score: 0, run: 0, high: 0, safe: 0, miss: 0, active: true },
+        player1: { score: 15, run: 0, high: 15, safety: 0, miss: 0, active: false },
+        player2: { score: 0, run: 0, high: 0, safety: 0, miss: 0, active: true },
         balls: 15,
         inning: 2,
         message: "New rack, Player 2's turn"
     },
     {
-        player1: { score: 15, run: 0, high: 15, safe: 0, miss: 0, active: false },
-        player2: { score: 8, run: 8, high: 8, safe: 0, miss: 0, active: true },
+        player1: { score: 15, run: 0, high: 15, safety: 0, miss: 0, active: false },
+        player2: { score: 8, run: 8, high: 8, safety: 0, miss: 0, active: true },
         balls: 7,
         inning: 2,
         message: "Player 2 on a run"
@@ -101,7 +101,7 @@ export default function LivePreview() {
                         <div className="grid grid-cols-4 gap-2 text-sm">
                             <PreviewStat label="Run" value={state.player1.run} />
                             <PreviewStat label="High" value={state.player1.high} />
-                            <PreviewStat label="Safe" value={state.player1.safe} />
+                            <PreviewStat label="Safety" value={state.player1.safety} />
                             <PreviewStat label="Miss" value={state.player1.miss} />
                         </div>
                     </div>
@@ -114,7 +114,7 @@ export default function LivePreview() {
                         <div className="grid grid-cols-4 gap-2 text-sm">
                             <PreviewStat label="Run" value={state.player2.run} />
                             <PreviewStat label="High" value={state.player2.high} />
-                            <PreviewStat label="Safe" value={state.player2.safe} />
+                            <PreviewStat label="Safety" value={state.player2.safety} />
                             <PreviewStat label="Miss" value={state.player2.miss} />
                         </div>
                     </div>

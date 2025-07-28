@@ -559,7 +559,7 @@ export default function PoolScoringComponent() {
         saveGameState();
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
         
-        addToTurnHistory(playerNum, 'Safe', 0);
+        addToTurnHistory(playerNum, 'Safety', 0);
 
         setPlayer(prev => ({
             ...prev,
@@ -794,7 +794,7 @@ export default function PoolScoringComponent() {
                 }
                 
                 // Track safes
-                if (turn.action === 'Safe') {
+                if (turn.action === 'Safety') {
                     acc.safeDetails.push({
                         inning: turn.inning,
                         timestamp: turn.timestamp
@@ -863,7 +863,7 @@ export default function PoolScoringComponent() {
                 // Add to current run
                 currentRun += turn.points || 0;
                 bestRun = Math.max(bestRun, currentRun);
-            } else if (['Miss', 'Safe', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
+            } else if (['Miss', 'Safety', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
                 // End current run
                 currentRun = 0;
             }
@@ -1138,7 +1138,7 @@ export default function PoolScoringComponent() {
                         totalFouls++;
                         currentRunCount = 0;
                         break;
-                    case 'Safe':
+                    case 'Safety':
                         totalSafes++;
                         safetyPlays++;
                         defensiveShots++;
@@ -1357,7 +1357,7 @@ export default function PoolScoringComponent() {
                     });
                     currentTurn.totalPoints += turn.points;
                     currentTurn.endTime = turn.timestamp;
-                } else if (['Miss', 'Foul', 'Scratch', 'Safe', 'Breaking Foul', 'Intentional Foul'].includes(turn.action)) {
+                } else if (['Miss', 'Foul', 'Scratch', 'Safety', 'Breaking Foul', 'Intentional Foul'].includes(turn.action)) {
                     // End current turn if there were any shots
                     if (currentTurn.shots.length > 0) {
                         turns.push({...currentTurn});
@@ -1591,7 +1591,7 @@ export default function PoolScoringComponent() {
                             {/* Top row - 4 metrics */}
                             <div className="grid grid-cols-4 gap-2">
                                 <StatBox 
-                                    label="Safe"
+                                    label="Safety"
                                     value={player1.safes || 0}
                                     onClick={() => gameStarted && handleSafe(1)}
                                     color={isDarkMode ? 'text-blue-400' : 'text-blue-600'}
@@ -1628,7 +1628,7 @@ export default function PoolScoringComponent() {
                                             if (turn.action === 'Points' || turn.action === 'Finish Rack') {
                                                 currentRun += turn.points || 0;
                                                 bestRun = Math.max(bestRun, currentRun);
-                                            } else if (['Miss', 'Safe', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
+                                            } else if (['Miss', 'Safety', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
                                                 currentRun = 0;
                                             }
                                         }
@@ -1700,7 +1700,7 @@ export default function PoolScoringComponent() {
                             {/* Top row - 4 metrics */}
                             <div className="grid grid-cols-4 gap-2">
                                 <StatBox 
-                                    label="Safe"
+                                    label="Safety"
                                     value={player2.safes || 0}
                                     onClick={() => gameStarted && handleSafe(2)}
                                     color={isDarkMode ? 'text-orange-400' : 'text-orange-600'}
@@ -1737,7 +1737,7 @@ export default function PoolScoringComponent() {
                                             if (turn.action === 'Points' || turn.action === 'Finish Rack') {
                                                 currentRun += turn.points || 0;
                                                 bestRun = Math.max(bestRun, currentRun);
-                                            } else if (['Miss', 'Safe', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
+                                            } else if (['Miss', 'Safety', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
                                                 currentRun = 0;
                                             }
                                         }
@@ -2125,7 +2125,7 @@ export default function PoolScoringComponent() {
                                         <div className="grid grid-cols-4 gap-3">
                                             <div className="bg-green-500/10 rounded p-2 text-center">
                                                 <div className="text-lg font-bold text-green-400">{stats.totalSafes || 0}</div>
-                                                <div className="text-xs opacity-60">Safes</div>
+                                                <div className="text-xs opacity-60">Safety</div>
                                             </div>
                                             <div className="bg-red-500/10 rounded p-2 text-center">
                                                 <div className="text-lg font-bold text-red-400">{stats.totalMisses || 0}</div>
@@ -2165,7 +2165,7 @@ export default function PoolScoringComponent() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-3">
                                                 <div className="bg-green-500/20 rounded p-3">
-                                                    <h4 className="font-medium text-green-400 mb-2">Safes ({stats.totalSafes || 0})</h4>
+                                                    <h4 className="font-medium text-green-400 mb-2">Safety ({stats.totalSafes || 0})</h4>
                                                     <div className="space-y-1">
                                                         {(stats.safeDetails || []).map((safe, idx) => (
                                                             <div key={idx} className="text-sm flex justify-between bg-black/10 rounded px-2 py-1">
@@ -2205,7 +2205,7 @@ export default function PoolScoringComponent() {
                                                                         runStart = turn.inning;
                                                                     }
                                                                     currentRun += turn.points || 0;
-                                                                } else if (['Miss', 'Safe', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
+                                                                } else if (['Miss', 'Safety', 'Foul', 'Intentional Foul', 'Breaking Foul', 'Scratch'].includes(turn.action)) {
                                                                     if (currentRun > 0) {
                                                                         runs.push({
                                                                             start: runStart,

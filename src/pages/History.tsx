@@ -474,7 +474,7 @@ export default function History() {
                             actionText = turn.isBreak ? 'Break Scratch' : 'Scratch';
                             actionColor = 'text-red-500';
                           } else if (turn.isSafetyPlay || turn.isDefensiveShot) {
-                            actionText = 'Safe';
+                            actionText = 'Safety';
                             actionColor = 'text-yellow-500';
                           } else if (turn.isMiss) {
                             actionText = 'Miss';
@@ -620,7 +620,7 @@ export default function History() {
                     <div className="grid grid-cols-4 gap-3">
                       <div className="bg-green-500/10 rounded p-2 text-center">
                         <div className="text-lg font-bold text-green-400">{stats.totalSafes || 0}</div>
-                        <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Safes</div>
+                        <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Safety</div>
                       </div>
                       <div className="bg-red-500/10 rounded p-2 text-center">
                         <div className="text-lg font-bold text-red-400">{stats.totalMisses || 0}</div>
@@ -660,7 +660,7 @@ export default function History() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-3">
                         <div className="bg-green-500/20 rounded p-3">
-                          <h4 className="font-medium text-green-400 mb-2">Safes ({stats.totalSafes || 0})</h4>
+                          <h4 className="font-medium text-green-400 mb-2">Safety ({stats.totalSafes || 0})</h4>
                           <div className="space-y-1">
                             {(stats.safeDetails || []).map((safe, idx) => (
                               <div key={idx} className={`text-sm flex justify-between rounded px-2 py-1 ${isDarkMode ? 'bg-black/10' : 'bg-gray-100'}`}>
