@@ -1770,7 +1770,7 @@ export default function PoolScoringComponent() {
                 </div>
 
                 {/* Bottom Section with Game Info */}
-                <div className={`fixed bottom-0 left-0 right-0 
+                <div className={`fixed bottom-20 left-0 right-0 
                     ${isDarkMode ? 'bg-black/50' : 'bg-white/50'} 
                     backdrop-blur-sm`}>
                     {/* Game Info Row */}
