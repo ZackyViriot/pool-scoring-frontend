@@ -144,7 +144,7 @@ export default function History() {
     const player = playerNum === 1 ? match.player1 : match.player2;
     const playerStats = playerNum === 1 ? match.player1Stats : match.player2Stats;
     const playerScore = playerNum === 1 ? match.player1Score : match.player2Score;
-    const isWinner = match.winner._id === player._id;
+    const isWinner = match.winner.name === player.name;
 
     // Calculate innings played
     const playerInnings = new Set();
@@ -357,11 +357,11 @@ export default function History() {
                     Winner: {selectedMatch.winner.name}
                   </p>
                   <div className="flex justify-center items-center gap-8 text-3xl font-bold mb-4">
-                    <div className={`${selectedMatch.winner._id === selectedMatch.player1._id ? 'text-green-400' : isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <div className={`${selectedMatch.winner.name === selectedMatch.player1.name ? 'text-green-400' : isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                       {selectedMatch.player1.name}: {selectedMatch.player1Score}
                     </div>
                     <div className={`text-2xl ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>vs</div>
-                    <div className={`${selectedMatch.winner._id === selectedMatch.player2._id ? 'text-green-400' : isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <div className={`${selectedMatch.winner.name === selectedMatch.player2.name ? 'text-green-400' : isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                       {selectedMatch.player2.name}: {selectedMatch.player2Score}
                     </div>
                   </div>

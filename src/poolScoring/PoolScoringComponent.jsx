@@ -422,6 +422,7 @@ export default function PoolScoringComponent() {
         // Save match with the final stats
         saveMatchToDatabase({
             winner: updatedPlayer,
+            winnerPlayerNumber: playerNum,
             loser: otherPlayer,
             finalScore1: playerNum === 1 ? newScore : otherPlayer.score,
             finalScore2: playerNum === 1 ? otherPlayer.score : newScore,
@@ -526,30 +527,27 @@ export default function PoolScoringComponent() {
         saveGameState();
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
         
+        const isThreeFoulPenalty = checkThreeFouls(playerNum);
+        const penaltyPoints = isThreeFoulPenalty ? 15 : 0;
+
         setPlayer(prev => ({
             ...prev,
-            score: prev.score - 1,
+            score: prev.score - 1 - penaltyPoints,
             fouls: (prev.fouls || 0) + 1,
             currentRun: 0,
             totalInnings: (prev.totalInnings || 0) + 1,
-            totalPoints: prev.totalPoints || 0  // Ensure totalPoints is initialized
+            totalPoints: prev.totalPoints || 0
         }));
 
-        const isThreeFoulPenalty = checkThreeFouls(playerNum);
-        
         addToTurnHistory(playerNum, 'Foul', -1);
         if (isThreeFoulPenalty) {
             addToTurnHistory(playerNum, 'Three Foul Penalty', -15);
-            setPlayer(prev => ({
-                ...prev,
-                score: prev.score - 15
-            }));
         }
-        
+
         if (playerNum === 2) {
             setCurrentInning(prev => prev + 1);
         }
-        
+
         setActivePlayer(playerNum === 1 ? 2 : 1);
     };
 
@@ -614,31 +612,28 @@ export default function PoolScoringComponent() {
         saveGameState();
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
         
+        const isThreeFoulPenalty = checkThreeFouls(playerNum);
+        const penaltyPoints = isThreeFoulPenalty ? 15 : 0;
+
         setPlayer(prev => ({
             ...prev,
-            score: prev.score - 1,
+            score: prev.score - 1 - penaltyPoints,
             scratches: (prev.scratches || 0) + 1,
             fouls: (prev.fouls || 0) + 1,
             currentRun: 0,
             totalInnings: (prev.totalInnings || 0) + 1,
-            totalPoints: prev.totalPoints || 0  // Ensure totalPoints is initialized
+            totalPoints: prev.totalPoints || 0
         }));
 
-        const isThreeFoulPenalty = checkThreeFouls(playerNum);
-        
         addToTurnHistory(playerNum, 'Scratch', -1);
         if (isThreeFoulPenalty) {
             addToTurnHistory(playerNum, 'Three Foul Penalty', -15);
-            setPlayer(prev => ({
-                ...prev,
-                score: prev.score - 15
-            }));
         }
-        
+
         if (playerNum === 2) {
             setCurrentInning(prev => prev + 1);
         }
-        
+
         setActivePlayer(playerNum === 1 ? 2 : 1);
     };
 
@@ -937,32 +932,29 @@ export default function PoolScoringComponent() {
         saveStateToHistory();
         saveGameState();
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
-        
+
+        const isThreeFoulPenalty = checkThreeFouls(playerNum);
+        const penaltyPoints = isThreeFoulPenalty ? 15 : 0;
+
         setPlayer(prev => ({
             ...prev,
-            score: prev.score - 1,
+            score: prev.score - 2 - penaltyPoints,
             fouls: (prev.fouls || 0) + 1,
             intentionalFouls: (prev.intentionalFouls || 0) + 1,
             currentRun: 0,
             totalInnings: (prev.totalInnings || 0) + 1,
-            totalPoints: prev.totalPoints || 0  // Ensure totalPoints is initialized
+            totalPoints: prev.totalPoints || 0
         }));
 
-        addToTurnHistory(playerNum, 'Intentional Foul', -1);
-
-        const isThreeFoulPenalty = checkThreeFouls(playerNum);
+        addToTurnHistory(playerNum, 'Intentional Foul', -2);
         if (isThreeFoulPenalty) {
             addToTurnHistory(playerNum, 'Three Foul Penalty', -15);
-            setPlayer(prev => ({
-                ...prev,
-                score: prev.score - 15
-            }));
         }
-        
+
         if (playerNum === 2) {
             setCurrentInning(prev => prev + 1);
         }
-        
+
         setActivePlayer(playerNum === 1 ? 2 : 1);
     };
 
@@ -977,7 +969,7 @@ export default function PoolScoringComponent() {
     const handleBreakFoulContinue = () => {
         const playerNum = breakFoulPlayer;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
-        
+
         // Check for consecutive fouls warning BEFORE recording the foul
         const foulHistory = playerNum === 1 ? player1FoulHistory : player2FoulHistory;
         if (foulHistory.length === 1 && foulHistory[0] === true) {
@@ -985,28 +977,26 @@ export default function PoolScoringComponent() {
             setConsecutiveFoulsPlayer(playerNum);
             setShowConsecutiveFoulsModal(true);
         }
-        
+
+        saveStateToHistory();
         saveGameState();
         
+        const isThreeFoulPenalty = checkThreeFouls(playerNum);
+        const penaltyPoints = isThreeFoulPenalty ? 15 : 0;
+
         setPlayer(prev => ({
             ...prev,
-            score: prev.score - 2,
+            score: prev.score - 2 - penaltyPoints,
             fouls: (prev.fouls || 0) + 1,
             breakingFouls: (prev.breakingFouls || 0) + 1,
             currentRun: 0,
             totalInnings: (prev.totalInnings || 0) + 1,
-            totalPoints: prev.totalPoints || 0  // Ensure totalPoints is initialized
+            totalPoints: prev.totalPoints || 0
         }));
 
         addToTurnHistory(playerNum, 'Breaking Foul', -2);
-
-        const isThreeFoulPenalty = checkThreeFouls(playerNum);
         if (isThreeFoulPenalty) {
             addToTurnHistory(playerNum, 'Three Foul Penalty', -15);
-            setPlayer(prev => ({
-                ...prev,
-                score: prev.score - 15
-            }));
         }
 
         if (playerNum === 2) {
@@ -1022,7 +1012,7 @@ export default function PoolScoringComponent() {
     const handleBreakFoulRebreak = () => {
         const playerNum = breakFoulPlayer;
         const setPlayer = playerNum === 1 ? setPlayer1 : setPlayer2;
-        
+
         // Check for consecutive fouls warning BEFORE recording the foul
         const foulHistory = playerNum === 1 ? player1FoulHistory : player2FoulHistory;
         if (foulHistory.length === 1 && foulHistory[0] === true) {
@@ -1030,21 +1020,23 @@ export default function PoolScoringComponent() {
             setConsecutiveFoulsPlayer(playerNum);
             setShowConsecutiveFoulsModal(true);
         }
-        
+
+        saveStateToHistory();
         saveGameState();
         
+        const isThreeFoulPenalty = checkThreeFouls(playerNum);
+        const penaltyPoints = isThreeFoulPenalty ? 15 : 0;
+
         // Update player state with breaking foul
         setPlayer(prev => ({
             ...prev,
-            score: prev.score - 2,
+            score: prev.score - 2 - penaltyPoints,
             fouls: (prev.fouls || 0) + 1,
             breakingFouls: (prev.breakingFouls || 0) + 1,
             currentRun: 0
         }));
 
         addToTurnHistory(playerNum, 'Breaking Foul - Rebreak', -2);
-
-        const isThreeFoulPenalty = checkThreeFouls(playerNum);
         if (isThreeFoulPenalty) {
             addToTurnHistory(playerNum, 'Three Foul Penalty', -15);
         }
@@ -1116,6 +1108,15 @@ export default function PoolScoringComponent() {
         let safetyPlays = player.safetyPlays || 0;
         let playerInnings = 0;
         let wasBreakShot = false;
+        const runHistoryArr = [];
+
+        // Helper to end a run and record it
+        const endRun = () => {
+            if (currentRunCount > 0) {
+                runHistoryArr.push(currentRunCount);
+            }
+            currentRunCount = 0;
+        };
 
         // Count additional stats from turn history
         turnHistory.forEach(turn => {
@@ -1136,41 +1137,45 @@ export default function PoolScoringComponent() {
                     case 'Breaking Foul - Rebreak':
                         totalBreakingFouls++;
                         totalFouls++;
-                        currentRunCount = 0;
+                        endRun();
                         break;
                     case 'Safety':
                         totalSafes++;
                         safetyPlays++;
                         defensiveShots++;
-                        currentRunCount = 0;
+                        endRun();
                         break;
                     case 'Miss':
                         totalMisses++;
-                        currentRunCount = 0;
+                        endRun();
                         break;
                     case 'Scratch':
                     case 'Break Scratch':
                         totalScratches++;
                         totalFouls++;
-                        currentRunCount = 0;
+                        endRun();
                         break;
                     case 'Foul':
                         totalFouls++;
-                        currentRunCount = 0;
+                        endRun();
                         break;
                     case 'Intentional Foul':
                         totalFouls++;
                         totalIntentionalFouls++;
-                        currentRunCount = 0;
+                        endRun();
                         break;
                     default:
                         if (!['New Rack', 'Undo', 'Handicap Applied'].includes(turn.action)) {
-                            currentRunCount = 0;
+                            endRun();
                         }
                 }
                 wasBreakShot = false;
             }
         });
+        // Record any in-progress run at end of game
+        if (currentRunCount > 0) {
+            runHistoryArr.push(currentRunCount);
+        }
 
         // Calculate final stats
         const stats = {
@@ -1188,7 +1193,7 @@ export default function PoolScoringComponent() {
             misses: totalMisses,
             bestRun: Math.max(maxRunInGame, player.bestRun || 0),
             currentRun: currentRunCount,
-            runHistory: []
+            runHistory: runHistoryArr
         };
 
         // Ensure all stats are numbers and non-negative
@@ -1215,39 +1220,19 @@ export default function PoolScoringComponent() {
                 throw new Error('Authentication information not found');
             }
 
-            // Calculate final stats for both players
+            // Use the properly calculated stats from handleWin
             const player1Stats = {
-                score: player1.score || 0,
-                totalPoints: player1.score || 0,
-                totalInnings: currentInning,
-                safes: player1.safes || 0,
-                misses: player1.misses || 0,
-                bestRun: player1.bestRun || 0,
-                scratches: player1.scratches || 0,
-                fouls: player1.fouls || 0,
-                intentionalFouls: player1.intentionalFouls || 0,
-                breakingFouls: player1.breakingFouls || 0,
-                currentRun: player1.currentRun || 0,
-                runHistory: player1.runHistory || []
+                ...gameResult.player1FinalStats,
+                score: gameResult.finalScore1
             };
 
             const player2Stats = {
-                score: player2.score || 0,
-                totalPoints: player2.score || 0,
-                totalInnings: currentInning,
-                safes: player2.safes || 0,
-                misses: player2.misses || 0,
-                bestRun: player2.bestRun || 0,
-                scratches: player2.scratches || 0,
-                fouls: player2.fouls || 0,
-                intentionalFouls: player2.intentionalFouls || 0,
-                breakingFouls: player2.breakingFouls || 0,
-                currentRun: player2.currentRun || 0,
-                runHistory: player2.runHistory || []
+                ...gameResult.player2FinalStats,
+                score: gameResult.finalScore2
             };
 
             // Process innings data to match backend schema
-            const processedInnings = turnHistory.map(turn => ({
+            const processedInnings = turnHistory.map((turn, index) => ({
                 playerNumber: turn.playerNum,
                 playerName: turn.playerName,
                 ballsPocketed: turn.action === 'Points' || turn.action === 'Finish Rack' ? turn.points : 0,
@@ -1256,7 +1241,7 @@ export default function PoolScoringComponent() {
                 score: turn.score,
                 inning: turn.inning,
                 points: turn.points,
-                isBreak: false,
+                isBreak: index === 0 || turn.action === 'Breaking Foul' || turn.action === 'Breaking Foul - Rebreak' || turn.action === 'Break Scratch',
                 isScratch: turn.action.toLowerCase().includes('scratch'),
                 isSafetyPlay: turn.action.toLowerCase().includes('safe'),
                 isDefensiveShot: turn.action.toLowerCase().includes('defensive'),
@@ -1281,7 +1266,8 @@ export default function PoolScoringComponent() {
                 player2Score: gameResult.finalScore2,
                 winner: {
                     name: gameResult.winner.name,
-                    handicap: gameResult.winner.handicap || 0
+                    handicap: gameResult.winner.handicap || 0,
+                    playerNumber: gameResult.winnerPlayerNumber
                 },
                 gameType: gameType || "Straight Pool",
                 duration: duration || 0,
