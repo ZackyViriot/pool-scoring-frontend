@@ -10,9 +10,6 @@ interface NavbarProps {
 
 export default function Navbar({ isDarkMode, setIsDarkMode }: NavbarProps) {
   const { logout } = useAuth();
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   const handleLogout = () => {
     logout();
@@ -47,14 +44,14 @@ export default function Navbar({ isDarkMode, setIsDarkMode }: NavbarProps) {
             >
               Game
             </Link>
-            <button 
-              onClick={scrollToTop}
+            <Link
+              to="/history"
               className={`font-medium hover:opacity-75 transition-opacity ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-600'
               }`}
             >
               History
-            </button>
+            </Link>
 
             <button
               onClick={handleLogout}

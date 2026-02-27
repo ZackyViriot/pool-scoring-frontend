@@ -164,31 +164,29 @@ export default function History() {
 
     (match.innings || []).forEach(turn => {
       if (turn.playerNumber === playerNum) {
-        if (turn.isSafetyPlay || turn.isDefensiveShot) {
+        const action = turn.action || '';
+        if (action === 'Safety' || turn.isSafetyPlay || turn.isDefensiveShot) {
           safeDetails.push({ inning: turn.inning });
         }
-        if (turn.isMiss) {
+        if (action === 'Miss' || turn.isMiss) {
           missDetails.push({ inning: turn.inning });
         }
-        if (turn.isScratch) {
+        if (action === 'Scratch' || action === 'Break Scratch' || turn.isScratch) {
           scratchDetails.push({ inning: turn.inning });
         }
-        if (turn.isFoul || turn.isBreakingFoul || turn.isIntentionalFoul) {
-          let foulType = 'Foul';
-          let points = -1;
-          if (turn.isBreakingFoul) {
-            foulType = 'Breaking Foul';
-            points = -2;
-          } else if (turn.isIntentionalFoul) {
-            foulType = 'Intentional Foul';
-            points = -2;
-          }
-          foulDetails.push({ inning: turn.inning, type: foulType, points });
+        // Check specific foul types first to avoid double-counting
+        // (isBreakingFoul and isIntentionalFoul also set isFoul=true)
+        if (action === 'Breaking Foul' || action === 'Breaking Foul - Rebreak' || turn.isBreakingFoul) {
+          foulDetails.push({ inning: turn.inning, type: 'Breaking Foul', points: -2 });
+        } else if (action === 'Intentional Foul' || turn.isIntentionalFoul) {
+          foulDetails.push({ inning: turn.inning, type: 'Intentional Foul', points: -2 });
+        } else if (action === 'Foul' || (turn.isFoul && !turn.isBreakingFoul && !turn.isIntentionalFoul)) {
+          foulDetails.push({ inning: turn.inning, type: 'Foul', points: -1 });
         }
-        if (turn.ballsPocketed > 0 && !turn.isBreak) {
+        if (action === 'Points' || (turn.ballsPocketed > 0 && !turn.isBreak && action !== 'Finish Rack')) {
           runDetails.push({ inning: turn.inning, points: turn.points });
         }
-        if (turn.action === 'Finish Rack') {
+        if (action === 'Finish Rack') {
           finishRackDetails.push({ inning: turn.inning, points: turn.points });
         }
       }
@@ -197,11 +195,11 @@ export default function History() {
     return {
       name: player.name,
       totalScore: playerScore,
-      bestRun: playerStats.bestRun,
-      totalSafes: playerStats.safes,
-      totalMisses: playerStats.misses,
-      totalScratches: playerStats.scratches,
-      totalFouls: playerStats.fouls,
+      bestRun: playerStats?.bestRun || 0,
+      totalSafes: safeDetails.length,
+      totalMisses: missDetails.length,
+      totalScratches: scratchDetails.length,
+      totalFouls: foulDetails.length,
       totalFinishRacks: finishRackDetails.length,
       safeDetails,
       missDetails,
@@ -366,7 +364,10 @@ export default function History() {
                     </div>
                   </div>
                   <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Game ended in {(selectedMatch.innings || []).length} innings • {formatDuration(selectedMatch.duration)}
+                    {(() => {
+                      const uniqueInnings = new Set((selectedMatch.innings || []).map(t => t.inning));
+                      return `${uniqueInnings.size} innings • ${(selectedMatch.innings || []).length} turns`;
+                    })()} • {formatDuration(selectedMatch.duration)}
                   </div>
                 </div>
 
@@ -455,38 +456,42 @@ export default function History() {
                           const isPlayer1 = turn.playerName === selectedMatch.player1.name;
                           const playerColor = isPlayer1 ? 'text-blue-400' : 'text-orange-400';
                           
+                          // Use the stored action string as primary source of truth,
+                          // with boolean flags as fallback
                           let actionText = '';
                           let actionColor = 'text-gray-400';
+                          const action = turn.action || '';
 
-                          if (turn.isBreak && turn.ballsPocketed > 0) {
-                            actionText = `Break - Made ${turn.ballsPocketed} ball${turn.ballsPocketed !== 1 ? 's' : ''}`;
-                            actionColor = 'text-green-500';
-                          } else if (turn.isFoul) {
-                            actionText = 'Foul';
+                          if (action === 'Breaking Foul' || action === 'Breaking Foul - Rebreak' || turn.isBreakingFoul) {
+                            actionText = action || 'Breaking Foul';
                             actionColor = 'text-red-500';
-                          } else if (turn.isBreakingFoul) {
-                            actionText = 'Breaking Foul';
-                            actionColor = 'text-red-500';
-                          } else if (turn.isIntentionalFoul) {
+                          } else if (action === 'Intentional Foul' || turn.isIntentionalFoul) {
                             actionText = 'Intentional Foul';
                             actionColor = 'text-red-500';
-                          } else if (turn.isScratch) {
-                            actionText = turn.isBreak ? 'Break Scratch' : 'Scratch';
+                          } else if (action === 'Break Scratch' || (turn.isScratch && turn.isBreak)) {
+                            actionText = 'Break Scratch';
                             actionColor = 'text-red-500';
-                          } else if (turn.isSafetyPlay || turn.isDefensiveShot) {
+                          } else if (action === 'Scratch' || turn.isScratch) {
+                            actionText = 'Scratch';
+                            actionColor = 'text-orange-500';
+                          } else if (action === 'Foul' || turn.isFoul) {
+                            actionText = 'Foul';
+                            actionColor = 'text-red-500';
+                          } else if (action === 'Safety' || turn.isSafetyPlay || turn.isDefensiveShot) {
                             actionText = 'Safety';
                             actionColor = 'text-yellow-500';
-                          } else if (turn.isMiss) {
+                          } else if (action === 'Miss' || turn.isMiss) {
                             actionText = 'Miss';
-                            actionColor = 'text-red-500';
-                          } else if (turn.ballsPocketed > 0) {
-                            actionText = `Made ${turn.ballsPocketed} ball${turn.ballsPocketed !== 1 ? 's' : ''}`;
+                            actionColor = 'text-red-400';
+                          } else if (action === 'Finish Rack') {
+                            actionText = `Finish Rack (+${turn.points})`;
                             actionColor = 'text-green-500';
-                          } else if (turn.action === 'Finish Rack') {
-                            actionText = 'Finish Rack';
+                          } else if (action === 'Points' || turn.ballsPocketed > 0) {
+                            const count = turn.ballsPocketed || turn.points || 0;
+                            actionText = `Made ${count} ball${count !== 1 ? 's' : ''}`;
                             actionColor = 'text-green-500';
                           } else {
-                            actionText = 'No balls pocketed';
+                            actionText = action || 'No balls pocketed';
                             actionColor = 'text-gray-500';
                           }
 

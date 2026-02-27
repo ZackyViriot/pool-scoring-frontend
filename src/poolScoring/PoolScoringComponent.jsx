@@ -1092,20 +1092,20 @@ export default function PoolScoringComponent() {
     };
 
     // Update calculatePlayerStats function to properly map frontend stats
+    // Stats are derived purely from turnHistory to avoid double-counting
     const calculatePlayerStats = (player, playerNum) => {
         let totalPoints = player.score || 0;
-        let totalSafes = player.safes || 0;
-        let totalMisses = player.misses || 0;
-        let totalFouls = player.fouls || 0;
-        let totalScratches = player.scratches || 0;
-        let totalIntentionalFouls = player.intentionalFouls || 0;
-        let totalBreakingFouls = player.breakingFouls || 0;
-        // Removed unused bestRunInGame variable
+        let totalSafes = 0;
+        let totalMisses = 0;
+        let totalFouls = 0;
+        let totalScratches = 0;
+        let totalIntentionalFouls = 0;
+        let totalBreakingFouls = 0;
         let currentRunCount = 0;
         let maxRunInGame = 0;
         let breakAndRuns = 0;
-        let defensiveShots = player.defensiveShots || 0;
-        let safetyPlays = player.safetyPlays || 0;
+        let defensiveShots = 0;
+        let safetyPlays = 0;
         let playerInnings = 0;
         let wasBreakShot = false;
         const runHistoryArr = [];
@@ -1118,7 +1118,7 @@ export default function PoolScoringComponent() {
             currentRunCount = 0;
         };
 
-        // Count additional stats from turn history
+        // Count all stats from turn history (single source of truth)
         turnHistory.forEach(turn => {
             if (turn.playerNum === playerNum) {
                 playerInnings++;
@@ -1152,7 +1152,6 @@ export default function PoolScoringComponent() {
                     case 'Scratch':
                     case 'Break Scratch':
                         totalScratches++;
-                        totalFouls++;
                         endRun();
                         break;
                     case 'Foul':
@@ -1540,21 +1539,29 @@ export default function PoolScoringComponent() {
                 {/* Scoring Section */}
                 <div className="grid grid-cols-2 gap-6 h-[calc(100vh-180px)] relative">
                     {/* Player 1 Score */}
-                    <div className={`rounded-lg p-2 transition-colors duration-200 h-full flex flex-col relative
-                        ${isDarkMode 
-                            ? 'bg-black/30 backdrop-blur-sm border border-white/10' 
-                            : 'bg-white/80 backdrop-blur-sm border border-gray-200 shadow-lg'}
-                        ${activePlayer === 1 ? 'ring-2 ring-blue-500/50 animate-pulse' : 'opacity-50'}
+                    <div className={`rounded-lg p-2 transition-all duration-300 h-full flex flex-col relative overflow-hidden
+                        ${isDarkMode
+                            ? 'bg-black/30 backdrop-blur-sm border-2'
+                            : 'bg-white/80 backdrop-blur-sm shadow-lg border-2'}
+                        ${activePlayer === 1
+                            ? (isDarkMode ? 'border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.4)]' : 'border-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.3)]')
+                            : (isDarkMode ? 'border-white/10 opacity-40 grayscale-[30%]' : 'border-gray-200 opacity-40 grayscale-[30%]')}
                         ${activePlayer !== 1 && gameStarted ? 'pointer-events-none' : ''}`}>
-                        
 
+                        {/* Player 1 Name Banner */}
+                        <div className={`text-center py-2 -mx-2 -mt-2 mb-2 font-bold text-lg tracking-wide
+                            ${activePlayer === 1
+                                ? 'bg-blue-500 text-white'
+                                : (isDarkMode ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400')}`}>
+                            <span>{player1.name || 'Player 1'}</span>
+                            {activePlayer === 1 && gameStarted && (
+                                <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-white text-blue-600 animate-pulse">
+                                    SHOOTING
+                                </span>
+                            )}
+                        </div>
 
                         <div className="text-center flex-grow flex flex-col justify-center">
-                            {activePlayer === 1 && gameStarted && (
-                                <div className="text-xl font-semibold mb-2 animate-pulse">
-                                    Shooting
-                                </div>
-                            )}
                             <div className={`text-8xl font-bold mb-4 transition-colors duration-300
                                 ${getScoreColor(player1.score, 1)}`}>
                                 {player1.score}
@@ -1649,21 +1656,29 @@ export default function PoolScoringComponent() {
                     <BallCounter />
 
                     {/* Player 2 Score */}
-                    <div className={`rounded-lg p-2 transition-colors duration-200 h-full flex flex-col relative
-                        ${isDarkMode 
-                            ? 'bg-black/30 backdrop-blur-sm border border-white/10' 
-                            : 'bg-white/80 backdrop-blur-sm border border-gray-200 shadow-lg'}
-                        ${activePlayer === 2 ? 'ring-2 ring-orange-500/50 animate-pulse' : 'opacity-50'}
+                    <div className={`rounded-lg p-2 transition-all duration-300 h-full flex flex-col relative overflow-hidden
+                        ${isDarkMode
+                            ? 'bg-black/30 backdrop-blur-sm border-2'
+                            : 'bg-white/80 backdrop-blur-sm shadow-lg border-2'}
+                        ${activePlayer === 2
+                            ? (isDarkMode ? 'border-orange-400 shadow-[0_0_25px_rgba(251,146,60,0.4)]' : 'border-orange-500 shadow-[0_0_25px_rgba(251,146,60,0.3)]')
+                            : (isDarkMode ? 'border-white/10 opacity-40 grayscale-[30%]' : 'border-gray-200 opacity-40 grayscale-[30%]')}
                         ${activePlayer !== 2 && gameStarted ? 'pointer-events-none' : ''}`}>
-                        
 
+                        {/* Player 2 Name Banner */}
+                        <div className={`text-center py-2 -mx-2 -mt-2 mb-2 font-bold text-lg tracking-wide
+                            ${activePlayer === 2
+                                ? 'bg-orange-500 text-white'
+                                : (isDarkMode ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400')}`}>
+                            <span>{player2.name || 'Player 2'}</span>
+                            {activePlayer === 2 && gameStarted && (
+                                <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-white text-orange-600 animate-pulse">
+                                    SHOOTING
+                                </span>
+                            )}
+                        </div>
 
                         <div className="text-center flex-grow flex flex-col justify-center">
-                            {activePlayer === 2 && gameStarted && (
-                                <div className="text-xl font-semibold mb-2 animate-pulse">
-                                    Shooting
-                                </div>
-                            )}
                             <div className={`text-8xl font-bold mb-4 transition-colors duration-300
                                 ${getScoreColor(player2.score, 2)}`}>
                                 {player2.score}
@@ -1770,8 +1785,12 @@ export default function PoolScoringComponent() {
                         <div>
                             Break: {breakPlayer === null ? 'Not Set' : (breakPlayer === 1 ? player1.name || 'Player 1' : player2.name || 'Player 2')}
                         </div>
-                        <div>
-                            Turn: {activePlayer === 1 ? player1.name || 'Player 1' : player2.name || 'Player 2'}
+                        <div className={`font-bold px-3 py-1 rounded-full ${
+                            activePlayer === 1
+                                ? 'bg-blue-500/30 text-blue-300'
+                                : 'bg-orange-500/30 text-orange-300'
+                        }`}>
+                            {activePlayer === 1 ? player1.name || 'Player 1' : player2.name || 'Player 2'}'s Turn
                         </div>
                     </div>
                 </div>
