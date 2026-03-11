@@ -896,16 +896,16 @@ export default function PoolScoringComponent() {
 
     // Update the stats grid styling
     const StatBox = ({ label, value, onClick, color = '', isSmallText = false }) => (
-        <button 
+        <button
             onClick={onClick}
-            className={`bg-black/20 rounded-lg p-6 text-center min-h-[120px] min-w-[120px] 
+            className={`bg-black/20 rounded-lg p-3 text-center min-h-[80px]
                 hover:bg-opacity-30 transition-all
                 ${onClick ? 'cursor-pointer hover:scale-105 transform' : 'cursor-default'}`}
         >
-            <div className={`text-6xl font-bold ${color}`}>
+            <div className={`text-4xl font-bold ${color}`}>
                 {value}
             </div>
-            <div className={`font-semibold opacity-75 ${isSmallText ? 'text-base' : 'text-xl'}`}>{label}</div>
+            <div className={`font-semibold opacity-75 ${isSmallText ? 'text-sm' : 'text-base'}`}>{label}</div>
         </button>
     );
 
@@ -1367,12 +1367,12 @@ export default function PoolScoringComponent() {
     };
 
     return (
-        <div className={`min-h-screen h-screen overflow-hidden transition-colors duration-200
-            ${isDarkMode 
-                ? 'bg-gradient-to-br from-gray-900 to-black text-white' 
+        <div className={`h-screen overflow-hidden transition-colors duration-200
+            ${isDarkMode
+                ? 'bg-gradient-to-br from-gray-900 to-black text-white'
                 : 'bg-gradient-to-br from-blue-50 to-white text-gray-900'}`}>
-            
-            <div className="h-screen flex flex-col px-1">
+
+            <div className="h-full flex flex-col px-1">
                 {/* Header Section */}
                 <div className={`rounded-lg p-2 mb-1 transition-colors duration-200
                     ${isDarkMode 
@@ -1537,9 +1537,9 @@ export default function PoolScoringComponent() {
                 </div>
 
                 {/* Scoring Section */}
-                <div className="grid grid-cols-2 gap-6 h-[calc(100vh-180px)] relative">
+                <div className="grid grid-cols-2 gap-6 flex-1 min-h-0 relative pb-14">
                     {/* Player 1 Score */}
-                    <div className={`rounded-lg p-2 transition-all duration-300 h-full flex flex-col relative overflow-hidden
+                    <div className={`rounded-lg p-2 transition-all duration-300 h-full flex flex-col relative overflow-auto
                         ${isDarkMode
                             ? 'bg-black/30 backdrop-blur-sm border-2'
                             : 'bg-white/80 backdrop-blur-sm shadow-lg border-2'}
@@ -1567,40 +1567,38 @@ export default function PoolScoringComponent() {
                                 {player1.score}
                             </div>
                             <div className="flex justify-center mb-4">
-                                <button 
+                                <button
                                     onClick={() => gameStarted && adjustScore(1, 1)}
-                                    className="text-7xl text-gray-400 hover:text-white 
-                                        w-44 h-44 rounded-full bg-gray-800/50 
-                                        flex items-center justify-center transition-colors
-                                        hover:scale-105 transform"
+                                    className="text-7xl text-gray-400 hover:text-white
+                                        w-44 h-44 rounded-full bg-gray-800/50
+                                        flex flex-col items-center justify-center transition-colors
+                                        hover:scale-105 transform relative"
                                 >
                                     +
+                                    <span className={`text-lg font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                        Run: {player1.currentRun || 0}
+                                    </span>
                                 </button>
                             </div>
                         </div>
 
                         {/* Player 1 Stats */}
-                        <div className="flex flex-col gap-4">
-                            {/* Top row - 4 metrics */}
-                            <div className="grid grid-cols-4 gap-4">
-                                <StatBox 
+                        <div className="flex flex-col gap-2">
+                            {/* Top row - 3 metrics */}
+                            <div className="grid grid-cols-3 gap-2">
+                                <StatBox
                                     label="Safety"
                                     value={player1.safes || 0}
                                     onClick={() => gameStarted && handleSafe(1)}
                                     color={isDarkMode ? 'text-blue-400' : 'text-blue-600'}
                                 />
-                                <StatBox 
+                                <StatBox
                                     label="Miss"
                                     value={player1.misses || 0}
                                     onClick={() => gameStarted && handleMiss(1)}
                                     color={isDarkMode ? 'text-blue-400' : 'text-blue-600'}
                                 />
-                                <StatBox 
-                                    label="Run"
-                                    value={player1.currentRun || 0}
-                                    color={isDarkMode ? 'text-blue-400' : 'text-blue-600'}
-                                />
-                                <StatBox 
+                                <StatBox
                                     label="Break F"
                                     value={player1.breakingFouls || 0}
                                     onClick={() => gameStarted && handleBreakingFoul(1)}
@@ -1609,7 +1607,7 @@ export default function PoolScoringComponent() {
                                 />
                             </div>
                             {/* Bottom row - 4 metrics */}
-                            <div className="grid grid-cols-4 gap-4">
+                            <div className="grid grid-cols-4 gap-2">
                                 <StatBox 
                                     label="Best"
                                     value={(() => {
@@ -1656,7 +1654,7 @@ export default function PoolScoringComponent() {
                     <BallCounter />
 
                     {/* Player 2 Score */}
-                    <div className={`rounded-lg p-2 transition-all duration-300 h-full flex flex-col relative overflow-hidden
+                    <div className={`rounded-lg p-2 transition-all duration-300 h-full flex flex-col relative overflow-auto
                         ${isDarkMode
                             ? 'bg-black/30 backdrop-blur-sm border-2'
                             : 'bg-white/80 backdrop-blur-sm shadow-lg border-2'}
@@ -1684,40 +1682,38 @@ export default function PoolScoringComponent() {
                                 {player2.score}
                             </div>
                             <div className="flex justify-center mb-4">
-                                <button 
+                                <button
                                     onClick={() => gameStarted && adjustScore(2, 1)}
-                                    className="text-7xl text-gray-400 hover:text-white 
-                                        w-44 h-44 rounded-full bg-gray-800/50 
-                                        flex items-center justify-center transition-colors
-                                        hover:scale-105 transform"
+                                    className="text-7xl text-gray-400 hover:text-white
+                                        w-44 h-44 rounded-full bg-gray-800/50
+                                        flex flex-col items-center justify-center transition-colors
+                                        hover:scale-105 transform relative"
                                 >
                                     +
+                                    <span className={`text-lg font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                                        Run: {player2.currentRun || 0}
+                                    </span>
                                 </button>
                             </div>
                         </div>
 
                         {/* Player 2 Stats */}
-                        <div className="flex flex-col gap-4">
-                            {/* Top row - 4 metrics */}
-                            <div className="grid grid-cols-4 gap-4">
-                                <StatBox 
+                        <div className="flex flex-col gap-2">
+                            {/* Top row - 3 metrics */}
+                            <div className="grid grid-cols-3 gap-2">
+                                <StatBox
                                     label="Safety"
                                     value={player2.safes || 0}
                                     onClick={() => gameStarted && handleSafe(2)}
                                     color={isDarkMode ? 'text-orange-400' : 'text-orange-600'}
                                 />
-                                <StatBox 
+                                <StatBox
                                     label="Miss"
                                     value={player2.misses || 0}
                                     onClick={() => gameStarted && handleMiss(2)}
                                     color={isDarkMode ? 'text-orange-400' : 'text-orange-600'}
                                 />
-                                <StatBox 
-                                    label="Run"
-                                    value={player2.currentRun || 0}
-                                    color={isDarkMode ? 'text-orange-400' : 'text-orange-600'}
-                                />
-                                <StatBox 
+                                <StatBox
                                     label="Break F"
                                     value={player2.breakingFouls || 0}
                                     onClick={() => gameStarted && handleBreakingFoul(2)}
@@ -1726,7 +1722,7 @@ export default function PoolScoringComponent() {
                                 />
                             </div>
                             {/* Bottom row - 4 metrics */}
-                            <div className="grid grid-cols-4 gap-4">
+                            <div className="grid grid-cols-4 gap-2">
                                 <StatBox 
                                     label="Best"
                                     value={(() => {
@@ -1771,11 +1767,11 @@ export default function PoolScoringComponent() {
                 </div>
 
                 {/* Bottom Section with Game Info */}
-                <div className={`fixed bottom-20 left-0 right-0 
-                    ${isDarkMode ? 'bg-black/50' : 'bg-white/50'} 
-                    backdrop-blur-sm`}>
+                <div className={`fixed bottom-0 left-0 right-0
+                    ${isDarkMode ? 'bg-black/50' : 'bg-white/50'}
+                    backdrop-blur-sm z-20`}>
                     {/* Game Info Row */}
-                    <div className="flex justify-center items-center gap-6 p-3">
+                    <div className="flex justify-center items-center gap-6 p-2">
                         <div>
                             Inning: {currentInning}
                         </div>
@@ -1918,7 +1914,7 @@ export default function PoolScoringComponent() {
                 {winner && !showWinModal && (
                     <button
                         onClick={toggleGameStats}
-                        className="fixed bottom-20 right-4 px-6 py-4 rounded-lg text-lg font-medium min-h-[60px]
+                        className="fixed bottom-12 right-4 px-6 py-4 rounded-lg text-lg font-medium min-h-[60px]
                             bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 
                             transition-colors z-50"
                     >
